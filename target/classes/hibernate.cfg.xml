@@ -25,6 +25,10 @@
         <property name="hibernate.connection.pool_size">10</property>
         <property name="hibernate.current_session_context_class">thread</property>
 
+        <!-- Add these properties to your hibernate.cfg.xml -->
+        <property name="hibernate.enable_lazy_load_no_trans">true</property>
+        <property name="hibernate.max_fetch_depth">3</property>
+
         <!-- Mention entity classes here (we'll add them as we create) -->
         <!-- <mapping class="com.karateclub.model.Person"/> -->
         <!-- <mapping class="com.karateclub.model.Member"/> -->
