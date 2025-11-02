@@ -28,10 +28,7 @@ public class HibernateUtil {
                 sources.addAnnotatedClass(com.karateclub.model.Payment.class);
                 sources.addAnnotatedClass(com.karateclub.model.BeltTest.class);
                 sources.addAnnotatedClass(com.karateclub.model.SubscriptionPeriod.class);
-
-                // Add entity classes here as we create them
-                // sources.addAnnotatedClass(Person.class);
-                // sources.addAnnotatedClass(Member.class);
+                sources.addAnnotatedClass(com.karateclub.model.MemberInstructor.class);
 
                 // Create Metadata
                 Metadata metadata = sources.getMetadataBuilder().build();

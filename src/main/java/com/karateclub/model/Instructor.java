@@ -2,6 +2,9 @@ package com.karateclub.model;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "Instructor")
 public class Instructor {
@@ -16,8 +19,19 @@ public class Instructor {
     @Column(name = "Qualification", length = 100)
     private String qualification;
 
+    @OneToMany(mappedBy = "instructor", cascade = CascadeType.ALL)
+    private List<MemberInstructor> memberInstructors = new ArrayList<>();
+
     // Constructors
     public Instructor() {}
+
+    public List<MemberInstructor> getMemberInstructors() {
+        return memberInstructors;
+    }
+
+    public void setMemberInstructors(List<MemberInstructor> memberInstructors) {
+        this.memberInstructors = memberInstructors;
+    }
 
     public Instructor(int instructorID, Person person, String qualification) {
         this.instructorID = instructorID;

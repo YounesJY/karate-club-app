@@ -34,13 +34,8 @@ public class Member {
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     private List<SubscriptionPeriod> subscriptionPeriods = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(
-            name = "MemberInstructor",
-            joinColumns = @JoinColumn(name = "MemberID"),
-            inverseJoinColumns = @JoinColumn(name = "InstructorID")
-    )
-    private List<Instructor> instructors = new ArrayList<>();
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    private List<MemberInstructor> memberInstructors = new ArrayList<>();
 
     // Constructors
     public Member() {}
@@ -83,8 +78,13 @@ public class Member {
         this.subscriptionPeriods = subscriptionPeriods;
     }
 
-    public List<Instructor> getInstructors() { return instructors; }
-    public void setInstructors(List<Instructor> instructors) { this.instructors = instructors; }
+    public List<MemberInstructor> getMemberInstructors() {
+        return memberInstructors;
+    }
+
+    public void setMemberInstructors(List<MemberInstructor> memberInstructors) {
+        this.memberInstructors = memberInstructors;
+    }
 
     @Override
     public String toString() {
