@@ -46,16 +46,28 @@ public class GenericDAO<T> {
     // UPDATE - Update entity
     public void update(T entity) {
         Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        Session session = null;
+        try {
+            session = HibernateUtil.getSessionFactory().openSession();
             transaction = session.beginTransaction();
             session.merge(entity);
             transaction.commit();
         } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
+            if (transaction != null && transaction.isActive()) {
+                try {
+                    transaction.rollback();
+                } catch (Exception rollbackEx) {
+                    // Log rollback exception but throw the original
+                    System.err.println("Rollback failed: " + rollbackEx.getMessage());
+                }
+            }
             throw e;
+        } finally {
+            if (session != null && session.isOpen()) {
+                session.close();
+            }
         }
     }
-
     // DELETE - Delete entity
     public void delete(int id) {
         Transaction transaction = null;

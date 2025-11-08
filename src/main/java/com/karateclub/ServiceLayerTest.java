@@ -1,12 +1,12 @@
-package com.karateclub.service;
+package com.karateclub;
 
 import com.karateclub.model.*;
+import com.karateclub.service.*;
 import com.karateclub.service.exception.NotFoundException;
 import com.karateclub.service.exception.ValidationException;
 import com.karateclub.service.exception.BusinessRuleException;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class ServiceLayerTest {
