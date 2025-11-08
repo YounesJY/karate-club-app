@@ -77,7 +77,7 @@ public class GenericDAO<T> {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             Query<T> query = session.createQuery(hql, entityClass);
             for (int i = 0; i < parameters.length; i++) {
-                query.setParameter(i, parameters[i]);
+                query.setParameter(i + 1, parameters[i]);
             }
             return query.list();
         }
