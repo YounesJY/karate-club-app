@@ -5,7 +5,9 @@ import com.karateclub.dao.BeltRankDAO;
 import com.karateclub.dao.SubscriptionPeriodDAO;
 import com.karateclub.model.Member;
 import com.karateclub.model.BeltRank;
-
+import com.karateclub.service.exception.NotFoundException;
+import com.karateclub.service.exception.ValidationException;
+import com.karateclub.service.exception.BusinessRuleException;
 
 import java.util.List;
 
@@ -22,10 +24,11 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public Member getMemberById(int memberID) {
-        // Business rule: Only return active members unless specifically requested
+        validateMemberID(memberID);
+
         Member member = memberDAO.getById(memberID);
-        if (member != null && !member.isActive()) {
-            throw new IllegalArgumentException("Member is inactive");
+        if (member == null) {
+            throw new NotFoundException("Member not found with ID: " + memberID);
         }
         return member;
     }
@@ -37,7 +40,6 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public Member createMember(Member member) {
-        // Validation
         validateMember(member);
 
         // Business rule: New members start as active
@@ -52,15 +54,10 @@ public class MemberServiceImpl implements MemberService {
         memberDAO.save(member);
         return member;
     }
-
     @Override
     public Member updateMember(Member member) {
         validateMember(member);
-
-        Member existing = memberDAO.getById(member.getMemberID());
-        if (existing == null) {
-            throw new IllegalArgumentException("Member not found: " + member.getMemberID());
-        }
+        validateMemberExists(member.getMemberID());
 
         memberDAO.update(member);
         return member;
@@ -68,11 +65,15 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public void deleteMember(int memberID) {
+        validateMemberID(memberID);
+
         Member member = memberDAO.getById(memberID);
         if (member != null) {
             // Business rule: Don't actually delete, just deactivate
             member.setActive(false);
             memberDAO.update(member);
+        } else {
+            throw new NotFoundException("Member not found with ID: " + memberID);
         }
     }
 
@@ -88,16 +89,19 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public Member promoteMember(int memberID, int newRankID) {
+        validateMemberID(memberID);
+        validateBeltRankID(newRankID);
+
         Member member = memberDAO.getById(memberID);
         BeltRank newRank = beltRankDAO.getById(newRankID);
 
-        if (member == null) throw new IllegalArgumentException("Member not found");
-        if (newRank == null) throw new IllegalArgumentException("Invalid belt rank");
-        if (!member.isActive()) throw new IllegalArgumentException("Inactive member cannot be promoted");
+        if (member == null) throw new NotFoundException("Member not found with ID: " + memberID);
+        if (newRank == null) throw new NotFoundException("Belt rank not found with ID: " + newRankID);
+        if (!member.isActive()) throw new BusinessRuleException("Inactive member cannot be promoted");
 
         // Business rule: Check if member is eligible for promotion
         if (!isMemberEligibleForPromotion(memberID)) {
-            throw new IllegalArgumentException("Member is not eligible for promotion");
+            throw new BusinessRuleException("Member is not eligible for promotion");
         }
 
         member.setLastBeltRank(newRank);
@@ -105,11 +109,16 @@ public class MemberServiceImpl implements MemberService {
 
         return member;
     }
-
     @Override
     public boolean deactivateMember(int memberID) {
+        validateMemberID(memberID);
+
         Member member = memberDAO.getById(memberID);
-        if (member != null && member.isActive()) {
+        if (member == null) {
+            throw new NotFoundException("Member not found with ID: " + memberID);
+        }
+
+        if (member.isActive()) {
             member.setActive(false);
             memberDAO.update(member);
             return true;
@@ -119,11 +128,17 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public boolean activateMember(int memberID) {
+        validateMemberID(memberID);
+
         Member member = memberDAO.getById(memberID);
-        if (member != null && !member.isActive()) {
+        if (member == null) {
+            throw new NotFoundException("Member not found with ID: " + memberID);
+        }
+
+        if (!member.isActive()) {
             // Business rule: Check for unpaid fees before reactivation
             if (hasUnpaidFees(memberID)) {
-                throw new IllegalArgumentException("Cannot activate member with unpaid fees");
+                throw new BusinessRuleException("Cannot activate member with unpaid fees");
             }
             member.setActive(true);
             memberDAO.update(member);
@@ -131,24 +146,27 @@ public class MemberServiceImpl implements MemberService {
         }
         return false;
     }
-
     @Override
     public boolean isMemberEligibleForPromotion(int memberID) {
+        validateMemberID(memberID);
+
         Member member = memberDAO.getById(memberID);
-        if (member == null || !member.isActive()) return false;
+        if (member == null || !member.isActive()) {
+            return false;
+        }
 
         // Business rule: Check if member has active subscription
-        if (!hasActiveSubscription(memberID)) return false;
+        if (!hasActiveSubscription(memberID)) {
+            return false;
+        }
 
         // Business rule: Check if member has unpaid fees
-        if (hasUnpaidFees(memberID)) return false;
-
-        // Additional business rules can be added here
-        // (e.g., minimum time at current rank, passed required tests)
+        if (hasUnpaidFees(memberID)) {
+            return false;
+        }
 
         return true;
     }
-
     @Override
     public boolean hasActiveSubscription(int memberID) {
         return subscriptionPeriodDAO.hasActiveSubscription(memberID);
@@ -164,16 +182,37 @@ public class MemberServiceImpl implements MemberService {
     }
 
     // Private validation method
+    private void validateMemberID(int memberID) {
+        if (memberID <= 0) {
+            throw new ValidationException("Member ID must be positive");
+        }
+    }
+
+    private void validateBeltRankID(int rankID) {
+        if (rankID <= 0) {
+            throw new ValidationException("Belt rank ID must be positive");
+        }
+    }
+
     private void validateMember(Member member) {
         if (member == null) {
-            throw new IllegalArgumentException("Member cannot be null");
+            throw new ValidationException("Member cannot be null");
         }
         if (member.getPerson() == null) {
-            throw new IllegalArgumentException("Member must have associated person");
+            throw new ValidationException("Member must have associated person");
         }
         if (member.getEmergencyContactInfo() == null ||
                 member.getEmergencyContactInfo().trim().isEmpty()) {
-            throw new IllegalArgumentException("Emergency contact info is required");
+            throw new ValidationException("Emergency contact info is required");
+        }
+        if (member.getEmergencyContactInfo().trim().length() < 5) {
+            throw new ValidationException("Emergency contact info must be at least 5 characters");
+        }
+    }
+
+    private void validateMemberExists(int memberID) {
+        if (memberDAO.getById(memberID) == null) {
+            throw new NotFoundException("Member not found with ID: " + memberID);
         }
     }
 }
