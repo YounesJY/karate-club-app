@@ -3,10 +3,9 @@ package com.karateclub.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "Persons")
+@Table(name = "Person")
 public class Person {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "PersonID")
     private int personID;
 

@@ -6,10 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "Instructors")
+@Table(name = "Instructor")
 public class Instructor {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "InstructorID")
     private int instructorID;
 
@@ -20,7 +19,7 @@ public class Instructor {
     @Column(name = "Qualification", length = 100)
     private String qualification;
 
-    @OneToMany(mappedBy = "instructor")
+    @OneToMany(mappedBy = "instructor", cascade = CascadeType.ALL)
     private List<MemberInstructor> memberInstructors = new ArrayList<>();
 
     // Constructors

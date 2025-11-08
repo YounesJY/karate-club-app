@@ -4,10 +4,9 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "BeltTests")
+@Table(name = "BeltTest")
 public class BeltTest {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "TestID")
     private int testID;
 
