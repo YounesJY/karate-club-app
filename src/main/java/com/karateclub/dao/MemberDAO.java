@@ -87,19 +87,6 @@ public class MemberDAO extends GenericDAO<Member> {
 
     // BUSINESS LOGIC METHODS
 
-    // Check if member has active subscription
-    public boolean hasActiveSubscription(int memberID) {
-        try (Session session = getSession()) {
-            String hql = "SELECT COUNT(sp) FROM SubscriptionPeriod sp " +
-                    "WHERE sp.member.memberID = :memberID " +
-                    "AND sp.endDate > CURRENT_TIMESTAMP " +
-                    "AND sp.paid = true";
-            Query<Long> query = session.createQuery(hql, Long.class);
-            query.setParameter("memberID", memberID);
-            return query.uniqueResult() > 0;
-        }
-    }
-
     // Get member's next belt rank
     public Integer getNextBeltRankID(int memberID) {
         try (Session session = getSession()) {
