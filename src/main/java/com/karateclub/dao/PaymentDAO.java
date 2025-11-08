@@ -29,6 +29,11 @@ public class PaymentDAO extends GenericDAO<Payment> {
         }
     }
 
+    public List<Payment> findByMemberAndDateRange(int memberID, LocalDate startDate, LocalDate endDate) {
+        return findByHQL("FROM Payment p WHERE p.member.memberID = ?1 AND p.date BETWEEN ?2 AND ?3",
+                memberID, startDate, endDate);
+    }
+
     // Find payments above certain amount
     public List<Payment> findPaymentsAboveAmount(double amount) {
         return findByHQL("FROM Payment p WHERE p.amount > ?1", amount);
