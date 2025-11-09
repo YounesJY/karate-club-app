@@ -1,5 +1,5 @@
-<!-- [file name]: list.jsp (Members) -->
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page isELIgnored="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html>
@@ -35,7 +35,7 @@
 
     <c:if test="${not empty successMessage}">
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-                ${successMessage}
+            ${successMessage}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         <c:remove var="successMessage" scope="session"/>
@@ -43,7 +43,7 @@
 
     <c:if test="${not empty errorMessage}">
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                ${errorMessage}
+            ${errorMessage}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         <c:remove var="errorMessage" scope="session"/>
@@ -55,16 +55,16 @@
                 <div class="col-md-6">
                     <ul class="nav nav-pills">
                         <li class="nav-item">
-                            <a class="nav-link ${empty filter ? 'active' : ''}" href="members">All</a>
+                            <a class="nav-link ${empty param.filter ? 'active' : ''}" href="members">All</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link ${filter == 'active' ? 'active' : ''}"
+                            <a class="nav-link ${param.filter == 'active' ? 'active' : ''}"
                                href="members?filter=active">Active</a>
                         </li>
                     </ul>
                 </div>
                 <div class="col-md-6">
-                    <form class="d-flex">
+                    <form class="d-flex" method="get" action="members">
                         <input class="form-control me-2" type="search" placeholder="Search members..."
                                name="search" value="${param.search}">
                         <button class="btn btn-outline-success" type="submit">Search</button>
@@ -134,7 +134,7 @@
                                     </a>
                                     <a href="members?action=delete&id=${member.memberID}"
                                        class="btn btn-outline-danger"
-                                       onclick="return confirm('Delete this member?')">
+                                       onclick="return confirm('Delete this member permanently?')">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 </div>

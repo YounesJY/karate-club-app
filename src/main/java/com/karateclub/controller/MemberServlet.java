@@ -3,7 +3,7 @@ package com.karateclub.controller;
 
 import com.karateclub.service.MemberService;
 import com.karateclub.service.MemberServiceImpl;
-import com.karateclub.model.Member;
+import com.karateclub.model.*;
 import com.karateclub.service.exception.NotFoundException;
 import com.karateclub.service.exception.ValidationException;
 import com.karateclub.service.exception.BusinessRuleException;
@@ -96,12 +96,30 @@ public class MemberServlet extends HttpServlet {
             members = memberService.getAllMembers();
         }
 
+        // Enhanced debug output
+        System.out.println("=== DEBUG MemberServlet ===");
+        System.out.println("Filter: " + filter);
+        System.out.println("Members list: " + members);
+        System.out.println("Members size: " + (members != null ? members.size() : "NULL"));
+        System.out.println("Members class: " + (members != null ? members.getClass().getName() : "NULL"));
+
+        // Set attribute with different names for testing
         request.setAttribute("members", members);
+        request.setAttribute("membersList", members); // Alternative name
+        request.setAttribute("testAttribute", "Hello from Servlet");
+
+        System.out.println("Attributes set in request:");
+        java.util.Enumeration<String> attrNames = request.getAttributeNames();
+        while (attrNames.hasMoreElements()) {
+            String name = attrNames.nextElement();
+            System.out.println("  " + name + " = " + request.getAttribute(name));
+        }
+        System.out.println("=== END DEBUG ===");
+
         request.setAttribute("filter", filter);
         RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/members/list.jsp");
         dispatcher.forward(request, response);
     }
-
     private void showNewForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -125,6 +143,10 @@ public class MemberServlet extends HttpServlet {
 
         try {
             Member member = new Member();
+
+            // Initialize the Person object
+            member.setPerson(new Person());
+
             // Set member properties from request parameters
             setMemberFromRequest(member, request);
 
@@ -134,7 +156,13 @@ public class MemberServlet extends HttpServlet {
 
         } catch (ValidationException | BusinessRuleException e) {
             request.setAttribute("errorMessage", e.getMessage());
-            request.setAttribute("member", new Member());
+
+            // Create a temporary member to preserve form data
+            Member tempMember = new Member();
+            tempMember.setPerson(new Person());
+            setMemberFromRequest(tempMember, request);
+            request.setAttribute("member", tempMember);
+
             RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/members/form.jsp");
             dispatcher.forward(request, response);
         }
@@ -244,14 +272,43 @@ public class MemberServlet extends HttpServlet {
     }
 
     private void setMemberFromRequest(Member member, HttpServletRequest request) {
-        // This is a simplified version - you would need to set all properties
-        // including Person object, emergency contact, etc.
+        // Handle Person data
+        if (member.getPerson() == null) {
+            member.setPerson(new Person());
+        }
+
+        // Set Person properties
+        String name = request.getParameter("name");
+        if (name != null && !name.trim().isEmpty()) {
+            member.getPerson().setName(name.trim());
+        }
+
+        String contactInfo = request.getParameter("contactInfo");
+        if (contactInfo != null && !contactInfo.trim().isEmpty()) {
+            member.getPerson().setContactInfo(contactInfo.trim());
+        }
+
+        // Set emergency contact
         String emergencyContact = request.getParameter("emergencyContact");
         if (emergencyContact != null && !emergencyContact.trim().isEmpty()) {
             member.setEmergencyContactInfo(emergencyContact.trim());
         }
 
-        // Set other properties as needed
-        // Note: In a real application, you would need to handle the Person association
+        // Set belt rank
+        String beltRankId = request.getParameter("beltRankId");
+        if (beltRankId != null && !beltRankId.trim().isEmpty()) {
+            try {
+                BeltRank beltRank = new BeltRank();
+                beltRank.setRankID(Integer.parseInt(beltRankId));
+                // In a real app, you would fetch the complete BeltRank from service
+                member.setLastBeltRank(beltRank);
+            } catch (NumberFormatException e) {
+                // Handle parsing error
+            }
+        }
+
+        // Set active status
+        String active = request.getParameter("active");
+        member.setActive(active != null && active.equals("on"));
     }
 }// [file name]: MemberServlet.java

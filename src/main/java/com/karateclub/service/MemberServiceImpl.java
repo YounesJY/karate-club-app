@@ -22,20 +22,27 @@ public class MemberServiceImpl implements MemberService {
         this.subscriptionPeriodDAO = new SubscriptionPeriodDAO();
     }
 
-    @Override
-    public Member getMemberById(int memberID) {
-        validateMemberID(memberID);
+    // BASIC CRUD OPERATIONS
 
-        Member member = memberDAO.getById(memberID);
+    @Override
+    public List<Member> getAllMembers() {
+        return memberDAO.getAllMembersWithBasicDetails();
+    }
+
+    @Override
+    public Member getMemberById(int id) {
+        // Use detailed fetch for individual member views
+        Member member = memberDAO.getMemberWithDetails(id);
         if (member == null) {
-            throw new NotFoundException("Member not found with ID: " + memberID);
+            throw new NotFoundException("Member not found with ID: " + id);
         }
         return member;
     }
 
     @Override
-    public List<Member> getAllMembers() {
-        return memberDAO.getAll();
+    public List<Member> getActiveMembers() {
+        // Use the optimized method from DAO
+        return memberDAO.getActiveMembersWithBasicDetails();
     }
 
     @Override
@@ -54,6 +61,7 @@ public class MemberServiceImpl implements MemberService {
         memberDAO.save(member);
         return member;
     }
+
     @Override
     public Member updateMember(Member member) {
         validateMember(member);
@@ -77,22 +85,29 @@ public class MemberServiceImpl implements MemberService {
         }
     }
 
-    @Override
-    public List<Member> getActiveMembers() {
-        return memberDAO.findActiveMembers();
-    }
+    // QUERY OPERATIONS
 
     @Override
     public List<Member> getMembersByBeltRank(int rankID) {
+        validateBeltRankID(rankID);
         return memberDAO.findByBeltRank(rankID);
     }
+
+    public List<Member> searchMembersByName(String namePattern) {
+        if (namePattern == null || namePattern.trim().isEmpty()) {
+            return memberDAO.getActiveMembersWithBasicDetails();
+        }
+        return memberDAO.findByName(namePattern.trim());
+    }
+
+    // MEMBER MANAGEMENT OPERATIONS
 
     @Override
     public Member promoteMember(int memberID, int newRankID) {
         validateMemberID(memberID);
         validateBeltRankID(newRankID);
 
-        Member member = memberDAO.getById(memberID);
+        Member member = memberDAO.getMemberWithDetails(memberID);
         BeltRank newRank = beltRankDAO.getById(newRankID);
 
         if (member == null) throw new NotFoundException("Member not found with ID: " + memberID);
@@ -109,6 +124,7 @@ public class MemberServiceImpl implements MemberService {
 
         return member;
     }
+
     @Override
     public boolean deactivateMember(int memberID) {
         validateMemberID(memberID);
@@ -146,6 +162,9 @@ public class MemberServiceImpl implements MemberService {
         }
         return false;
     }
+
+    // BUSINESS RULE CHECKS
+
     @Override
     public boolean isMemberEligibleForPromotion(int memberID) {
         validateMemberID(memberID);
@@ -165,8 +184,12 @@ public class MemberServiceImpl implements MemberService {
             return false;
         }
 
+        // Additional business rules can be added here
+        // Example: Check minimum time at current rank, attendance requirements, etc.
+
         return true;
     }
+
     @Override
     public boolean hasActiveSubscription(int memberID) {
         return subscriptionPeriodDAO.hasActiveSubscription(memberID);
@@ -174,14 +197,29 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public boolean hasUnpaidFees(int memberID) {
-        // This would check subscription fees, test fees, etc.
-        // For now, let's assume we check if there are any unpaid subscriptions
+        // Use the optimized DAO method instead of loading all members
         List<Member> membersWithUnpaid = memberDAO.findMembersWithUnpaidSubscriptions();
         return membersWithUnpaid.stream()
                 .anyMatch(m -> m.getMemberID() == memberID);
     }
 
-    // Private validation method
+    // UTILITY METHODS
+
+    public Integer getNextBeltRank(int memberID) {
+        validateMemberID(memberID);
+        return memberDAO.getNextBeltRankID(memberID);
+    }
+
+    public long getActiveMembersCount() {
+        return memberDAO.countActiveMembers();
+    }
+
+    public long getInactiveMembersCount() {
+        return memberDAO.countInactiveMembers();
+    }
+
+    // VALIDATION METHODS
+
     private void validateMemberID(int memberID) {
         if (memberID <= 0) {
             throw new ValidationException("Member ID must be positive");
@@ -201,8 +239,13 @@ public class MemberServiceImpl implements MemberService {
         if (member.getPerson() == null) {
             throw new ValidationException("Member must have associated person");
         }
-        if (member.getEmergencyContactInfo() == null ||
-                member.getEmergencyContactInfo().trim().isEmpty()) {
+        if (member.getPerson().getName() == null || member.getPerson().getName().trim().isEmpty()) {
+            throw new ValidationException("Member name is required");
+        }
+        if (member.getPerson().getContactInfo() == null || member.getPerson().getContactInfo().trim().isEmpty()) {
+            throw new ValidationException("Contact information is required");
+        }
+        if (member.getEmergencyContactInfo() == null || member.getEmergencyContactInfo().trim().isEmpty()) {
             throw new ValidationException("Emergency contact info is required");
         }
         if (member.getEmergencyContactInfo().trim().length() < 5) {

@@ -38,7 +38,7 @@ public class GenericDAO<T> {
     // READ - Get by ID (lazy loading)
     public T getById(int id) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            return session.get(entityClass, id);
+            return session.find(entityClass, id);
         }
     }
 
@@ -77,7 +77,7 @@ public class GenericDAO<T> {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            T entity = session.get(entityClass, id);
+            T entity = session.find(entityClass, id);
             if (entity != null) {
                 session.remove(entity);
             }

@@ -13,6 +13,17 @@ public class MemberDAO extends GenericDAO<Member> {
     }
 
     // BASIC METHODS (Lazy Loading - Production Default)
+    // Get all members with basic details (both active and inactive)
+    public List<Member> getAllMembersWithBasicDetails() {
+        try (Session session = getSession()) {
+            String hql = "SELECT DISTINCT m FROM Member m " +
+                    "LEFT JOIN FETCH m.person " +
+                    "LEFT JOIN FETCH m.lastBeltRank " +
+                    "ORDER BY m.memberID";
+            Query<Member> query = session.createQuery(hql, Member.class);
+            return query.list();
+        }
+    }
 
     // Find active members (lazy loading)
     public List<Member> findActiveMembers() {

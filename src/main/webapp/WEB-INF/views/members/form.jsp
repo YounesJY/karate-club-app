@@ -1,5 +1,6 @@
 <!-- [file name]: form.jsp (Members) -->
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page isELIgnored="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html>
@@ -42,19 +43,19 @@
                             <div class="col-md-6">
                                 <label for="name" class="form-label">Full Name *</label>
                                 <input type="text" class="form-control" id="name" name="name"
-                                       value="${member.person.name}" required>
+                                       value="${not empty member.person ? member.person.name : ''}" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="contactInfo" class="form-label">Contact Info *</label>
                                 <input type="text" class="form-control" id="contactInfo" name="contactInfo"
-                                       value="${member.person.contactInfo}" required>
+                                       value="${not empty member.person ? member.person.contactInfo : ''}" required>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label for="emergencyContact" class="form-label">Emergency Contact *</label>
                             <input type="text" class="form-control" id="emergencyContact"
-                                   name="emergencyContact" value="${member.emergencyContactInfo}" required>
+                                   name="emergencyContact" value="${not empty member ? member.emergencyContactInfo : ''}" required>
                             <div class="form-text">At least 5 characters long</div>
                         </div>
 
@@ -64,13 +65,13 @@
                                 <select class="form-select" id="beltRank" name="beltRankId">
                                     <option value="">Select Belt Rank</option>
                                     <!-- Belt ranks would be populated from database -->
-                                    <option value="1" ${member.lastBeltRank.rankID == 1 ? 'selected' : ''}>
+                                    <option value="1" ${not empty member.lastBeltRank && member.lastBeltRank.rankID == 1 ? 'selected' : ''}>
                                         White Belt
                                     </option>
-                                    <option value="2" ${member.lastBeltRank.rankID == 2 ? 'selected' : ''}>
+                                    <option value="2" ${not empty member.lastBeltRank && member.lastBeltRank.rankID == 2 ? 'selected' : ''}>
                                         Yellow Belt
                                     </option>
-                                    <option value="3" ${member.lastBeltRank.rankID == 3 ? 'selected' : ''}>
+                                    <option value="3" ${not empty member.lastBeltRank && member.lastBeltRank.rankID == 3 ? 'selected' : ''}>
                                         Orange Belt
                                     </option>
                                     <!-- Add more belt ranks as needed -->
@@ -80,7 +81,7 @@
                                 <label class="form-label">Status</label>
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="active" name="active"
-                                    ${member.active ? 'checked' : ''}>
+                                    ${not empty member && member.active ? 'checked' : ''}>
                                     <label class="form-check-label" for="active">
                                         Active Member
                                     </label>
