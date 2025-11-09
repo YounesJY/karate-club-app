@@ -1,4 +1,4 @@
-package com.karateclub.util;
+package com.karateclub.tests;
 
 import com.karateclub.config.HibernateUtil;
 import com.karateclub.model.*;

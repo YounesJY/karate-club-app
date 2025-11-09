@@ -1,4 +1,4 @@
-package com.karateclub;
+package com.karateclub.tests;
 
 import com.karateclub.model.*;
 import com.karateclub.service.*;
