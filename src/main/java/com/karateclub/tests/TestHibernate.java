@@ -1,8 +1,7 @@
-package com.karateclub;
+package com.karateclub.tests;
 
 import com.karateclub.config.HibernateUtil;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 
 public class TestHibernate {
     public static void main(String[] args) {

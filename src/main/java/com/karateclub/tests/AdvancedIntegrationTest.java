@@ -1,11 +1,10 @@
-package com.karateclub;
+package com.karateclub.tests;
 
 import com.karateclub.model.*;
 import com.karateclub.service.exception.BusinessRuleException;
 import com.karateclub.service.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class AdvancedIntegrationTest {

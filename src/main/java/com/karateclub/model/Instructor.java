@@ -19,7 +19,7 @@ public class Instructor {
     @Column(name = "Qualification", length = 100)
     private String qualification;
 
-    @OneToMany(mappedBy = "instructor", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "instructor")
     private List<MemberInstructor> memberInstructors = new ArrayList<>();
 
     // Constructors
