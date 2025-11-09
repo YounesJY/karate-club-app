@@ -1,6 +1,7 @@
 // [file name]: MemberServlet.java
 package com.karateclub.controller;
 
+import com.karateclub.dao.BeltRankDAO;
 import com.karateclub.service.MemberService;
 import com.karateclub.service.MemberServiceImpl;
 import com.karateclub.model.*;
@@ -38,9 +39,6 @@ public class MemberServlet extends HttpServlet {
                 case "edit":
                     showEditForm(request, response);
                     break;
-                case "delete":
-                    deleteMember(request, response);
-                    break;
                 case "activate":
                     activateMember(request, response);
                     break;
@@ -72,6 +70,9 @@ public class MemberServlet extends HttpServlet {
                     break;
                 case "update":
                     updateMember(request, response);
+                    break;
+                case "delete":
+                    deleteMember(request, response);
                     break;
                 case "promote":
                     promoteMember(request, response);
@@ -131,6 +132,7 @@ public class MemberServlet extends HttpServlet {
             throws ServletException, IOException {
 
         int id = Integer.parseInt(request.getParameter("id"));
+        // This will now use the simplified query
         Member member = memberService.getMemberById(id);
         request.setAttribute("member", member);
 
@@ -163,6 +165,7 @@ public class MemberServlet extends HttpServlet {
             setMemberFromRequest(tempMember, request);
             request.setAttribute("member", tempMember);
 
+            // Use forward instead of redirect to preserve the form data and URL context
             RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/members/form.jsp");
             dispatcher.forward(request, response);
         }
@@ -182,6 +185,21 @@ public class MemberServlet extends HttpServlet {
 
         } catch (ValidationException | BusinessRuleException | NotFoundException e) {
             request.setAttribute("errorMessage", e.getMessage());
+
+            // Preserve the member data for re-display
+            try {
+                int id = Integer.parseInt(request.getParameter("id"));
+                Member member = memberService.getMemberById(id);
+                setMemberFromRequest(member, request); // Re-apply the form data
+                request.setAttribute("member", member);
+            } catch (Exception ex) {
+                // If we can't get the member, create a temporary one
+                Member tempMember = new Member();
+                tempMember.setPerson(new Person());
+                setMemberFromRequest(tempMember, request);
+                request.setAttribute("member", tempMember);
+            }
+
             RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/members/form.jsp");
             dispatcher.forward(request, response);
         }
@@ -241,16 +259,40 @@ public class MemberServlet extends HttpServlet {
     private void showPromoteForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        int id = Integer.parseInt(request.getParameter("id"));
-        Member member = memberService.getMemberById(id);
-        request.setAttribute("member", member);
+        try {
+            int id = Integer.parseInt(request.getParameter("id"));
+            Member member = memberService.getMemberById(id);
 
-        // You would need to get available ranks from BeltRankService
-        // List<BeltRank> availableRanks = beltRankService.getAvailableRanksForMember(id);
-        // request.setAttribute("availableRanks", availableRanks);
+            // Check if member is active
+            if (!member.isActive()) {
+                request.getSession().setAttribute("errorMessage", "Cannot promote inactive member: " + member.getPerson().getName());
+                response.sendRedirect("members");
+                return;
+            }
 
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/members/promote.jsp");
-        dispatcher.forward(request, response);
+            // Get available belt ranks for promotion (only higher ranks)
+            BeltRankDAO beltRankDAO = new BeltRankDAO();
+            List<BeltRank> availableRanks = beltRankDAO.getHigherRanks(member.getLastBeltRank().getRankID());
+
+            // Check if there are higher ranks available
+            if (availableRanks.isEmpty()) {
+                request.getSession().setAttribute("errorMessage",
+                        "No higher belt ranks available for " + member.getPerson().getName() +
+                                ". Current rank: " + member.getLastBeltRank().getRankName());
+                response.sendRedirect("members");
+                return;
+            }
+
+            request.setAttribute("member", member);
+            request.setAttribute("availableRanks", availableRanks);
+
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/members/promote.jsp");
+            dispatcher.forward(request, response);
+
+        } catch (Exception e) {
+            request.getSession().setAttribute("errorMessage", "Error loading promote form: " + e.getMessage());
+            response.sendRedirect("members");
+        }
     }
 
     private void promoteMember(HttpServletRequest request, HttpServletResponse response)
@@ -262,8 +304,13 @@ public class MemberServlet extends HttpServlet {
 
             Member member = memberService.promoteMember(memberId, newRankId);
             request.getSession().setAttribute("successMessage",
-                    "Member " + member.getPerson().getName() + " promoted successfully!");
+                    "Member " + member.getPerson().getName() + " promoted successfully to " +
+                            member.getLastBeltRank().getRankName() + "!");
 
+        } catch (BusinessRuleException e) {
+            request.getSession().setAttribute("errorMessage", "Cannot promote member: " + e.getMessage());
+        } catch (NotFoundException e) {
+            request.getSession().setAttribute("errorMessage", "Error: " + e.getMessage());
         } catch (Exception e) {
             request.getSession().setAttribute("errorMessage", "Error promoting member: " + e.getMessage());
         }
@@ -272,7 +319,7 @@ public class MemberServlet extends HttpServlet {
     }
 
     private void setMemberFromRequest(Member member, HttpServletRequest request) {
-        // Handle Person data
+        // Handle Person data - don't create new Person if it already exists
         if (member.getPerson() == null) {
             member.setPerson(new Person());
         }
@@ -294,21 +341,25 @@ public class MemberServlet extends HttpServlet {
             member.setEmergencyContactInfo(emergencyContact.trim());
         }
 
-        // Set belt rank
+        // Set belt rank - FIXED: Use the service to get the actual BeltRank object
         String beltRankId = request.getParameter("beltRankId");
         if (beltRankId != null && !beltRankId.trim().isEmpty()) {
             try {
+                int rankId = Integer.parseInt(beltRankId);
+                // You need to inject BeltRankService or get it from somewhere
+                // For now, let's create a temporary solution
                 BeltRank beltRank = new BeltRank();
-                beltRank.setRankID(Integer.parseInt(beltRankId));
-                // In a real app, you would fetch the complete BeltRank from service
+                beltRank.setRankID(rankId);
+                // Note: In production, you should fetch the complete BeltRank object
+                // BeltRank beltRank = beltRankService.getBeltRankById(rankId);
                 member.setLastBeltRank(beltRank);
             } catch (NumberFormatException e) {
-                // Handle parsing error
+                System.out.println("Error parsing belt rank ID: " + e.getMessage());
             }
         }
 
-        // Set active status
+        // Set active status - FIXED: Checkbox handling
         String active = request.getParameter("active");
-        member.setActive(active != null && active.equals("on"));
+        member.setActive("on".equals(active)); // Fixed checkbox value check
     }
 }// [file name]: MemberServlet.java

@@ -132,11 +132,16 @@
                                        class="btn btn-outline-info">
                                         <i class="fas fa-arrow-up"></i>
                                     </a>
-                                    <a href="members?action=delete&id=${member.memberID}"
-                                       class="btn btn-outline-danger"
-                                       onclick="return confirm('Delete this member permanently?')">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
+
+                                    <%-- Replace the delete link with a form --%>
+                                    <form action="members" method="post" style="display: inline;">
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="id" value="${member.memberID}">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                                                onclick="return confirm('Delete this member permanently?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

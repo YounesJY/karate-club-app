@@ -31,13 +31,14 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public Member getMemberById(int id) {
-        // Use detailed fetch for individual member views
-        Member member = memberDAO.getMemberWithDetails(id);
+        // Use simplified fetch for edit forms
+        Member member = memberDAO.getMemberForEdit(id);
         if (member == null) {
             throw new NotFoundException("Member not found with ID: " + id);
         }
         return member;
     }
+
 
     @Override
     public List<Member> getActiveMembers() {
@@ -67,7 +68,8 @@ public class MemberServiceImpl implements MemberService {
         validateMember(member);
         validateMemberExists(member.getMemberID());
 
-        memberDAO.update(member);
+        // Use the new method that handles Person updates
+        memberDAO.updateMemberWithPerson(member);
         return member;
     }
 
@@ -76,13 +78,12 @@ public class MemberServiceImpl implements MemberService {
         validateMemberID(memberID);
 
         Member member = memberDAO.getById(memberID);
-        if (member != null) {
-            // Business rule: Don't actually delete, just deactivate
-            member.setActive(false);
-            memberDAO.update(member);
-        } else {
+        if (member == null) {
             throw new NotFoundException("Member not found with ID: " + memberID);
         }
+
+        // Use the inherited delete method from GenericDAO
+        memberDAO.delete(memberID);
     }
 
     // QUERY OPERATIONS
@@ -174,18 +175,14 @@ public class MemberServiceImpl implements MemberService {
             return false;
         }
 
-        // Business rule: Check if member has active subscription
+        // More specific checks with better messaging potential
         if (!hasActiveSubscription(memberID)) {
-            return false;
+            throw new BusinessRuleException("Member has no active subscription. Please add a subscription first.");
         }
 
-        // Business rule: Check if member has unpaid fees
         if (hasUnpaidFees(memberID)) {
-            return false;
+            throw new BusinessRuleException("Member has unpaid fees. Please process payment before promotion.");
         }
-
-        // Additional business rules can be added here
-        // Example: Check minimum time at current rank, attendance requirements, etc.
 
         return true;
     }
@@ -242,15 +239,41 @@ public class MemberServiceImpl implements MemberService {
         if (member.getPerson().getName() == null || member.getPerson().getName().trim().isEmpty()) {
             throw new ValidationException("Member name is required");
         }
-        if (member.getPerson().getContactInfo() == null || member.getPerson().getContactInfo().trim().isEmpty()) {
+
+        // Contact Info Validation
+        String contactInfo = member.getPerson().getContactInfo();
+        if (contactInfo == null || contactInfo.trim().isEmpty()) {
             throw new ValidationException("Contact information is required");
         }
-        if (member.getEmergencyContactInfo() == null || member.getEmergencyContactInfo().trim().isEmpty()) {
+        if (contactInfo.trim().length() < 5) {
+            throw new ValidationException("Contact info must be at least 5 characters");
+        }
+        if (!isValidContactInfo(contactInfo.trim())) {
+            throw new ValidationException("Contact info must be a valid phone number or email");
+        }
+
+        // Emergency Contact Validation
+        String emergencyContact = member.getEmergencyContactInfo();
+        if (emergencyContact == null || emergencyContact.trim().isEmpty()) {
             throw new ValidationException("Emergency contact info is required");
         }
-        if (member.getEmergencyContactInfo().trim().length() < 5) {
+        if (emergencyContact.trim().length() < 5) {
             throw new ValidationException("Emergency contact info must be at least 5 characters");
         }
+        if (!isValidContactInfo(emergencyContact.trim())) {
+            throw new ValidationException("Emergency contact must be a valid phone number");
+        }
+    }
+
+    // Helper method for contact validation
+    private boolean isValidContactInfo(String contact) {
+        // Phone number pattern: allows numbers, spaces, hyphens, parentheses
+        String phonePattern = "^[\\d\\s\\-\\(\\)\\+]+$";
+
+        // Email pattern
+        String emailPattern = "^[A-Za-z0-9+_.-]+@(.+)$";
+
+        return contact.matches(phonePattern) || contact.matches(emailPattern);
     }
 
     private void validateMemberExists(int memberID) {

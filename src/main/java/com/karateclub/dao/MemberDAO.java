@@ -1,7 +1,9 @@
 package com.karateclub.dao;
 
+import com.karateclub.config.HibernateUtil;
 import com.karateclub.model.Member;
 import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
 import java.util.List;
@@ -52,19 +54,12 @@ public class MemberDAO extends GenericDAO<Member> {
 
     // ADVANCED METHODS (JOIN FETCH - Use Only When Needed)
 
-    // Get member with full details (JOIN FETCH - for detailed views)
+    // FIXED: Get member with details for promotion (without multiple bag fetch)
     public Member getMemberWithDetails(int memberID) {
         try (Session session = getSession()) {
             String hql = "SELECT DISTINCT m FROM Member m " +
                     "LEFT JOIN FETCH m.person " +
                     "LEFT JOIN FETCH m.lastBeltRank " +
-                    "LEFT JOIN FETCH m.payments " +
-                    "LEFT JOIN FETCH m.beltTests bt " +
-                    "LEFT JOIN FETCH bt.rank " +
-                    "LEFT JOIN FETCH bt.testedByInstructor " +
-                    "LEFT JOIN FETCH m.subscriptionPeriods " +
-                    "LEFT JOIN FETCH m.memberInstructors mi " +
-                    "LEFT JOIN FETCH mi.instructor " +
                     "WHERE m.memberID = :memberID";
             Query<Member> query = session.createQuery(hql, Member.class);
             query.setParameter("memberID", memberID);
@@ -96,7 +91,51 @@ public class MemberDAO extends GenericDAO<Member> {
         }
     }
 
+
     // BUSINESS LOGIC METHODS
+
+    // In MemberDAO.java - Simplified for edit form
+    public Member getMemberForEdit(int memberID) {
+        try (Session session = getSession()) {
+            String hql = "SELECT DISTINCT m FROM Member m " +
+                    "LEFT JOIN FETCH m.person " +
+                    "LEFT JOIN FETCH m.lastBeltRank " +
+                    "WHERE m.memberID = :memberID";
+            return session.createQuery(hql, Member.class)
+                    .setParameter("memberID", memberID)
+                    .uniqueResult();
+        }
+    }
+
+
+    // In MemberDAO.java - Add this method
+    public void updateMemberWithPerson(Member member) {
+        Transaction transaction = null;
+        Session session = null;
+        try {
+            session = HibernateUtil.getSessionFactory().openSession();
+            transaction = session.beginTransaction();
+
+            // First update the Person entity
+            if (member.getPerson() != null) {
+                session.merge(member.getPerson()); // This ensures Person gets updated
+            }
+
+            // Then update the Member entity
+            session.merge(member);
+
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null && transaction.isActive()) {
+                transaction.rollback();
+            }
+            throw e;
+        } finally {
+            if (session != null && session.isOpen()) {
+                session.close();
+            }
+        }
+    }
 
     // Get member's next belt rank
     public Integer getNextBeltRankID(int memberID) {
@@ -126,4 +165,6 @@ public class MemberDAO extends GenericDAO<Member> {
             return query.uniqueResult();
         }
     }
+
+
 }

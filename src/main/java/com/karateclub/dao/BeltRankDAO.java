@@ -27,4 +27,14 @@ public class BeltRankDAO extends GenericDAO<BeltRank> {
     public List<BeltRank> getAllOrdered() {
         return findByHQL("FROM BeltRank br ORDER BY br.rankID");
     }
+
+    // ADD THIS METHOD: Get all belt ranks higher than the current rank
+    public List<BeltRank> getHigherRanks(int currentRankId) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "FROM BeltRank br WHERE br.rankID > :currentRankId ORDER BY br.rankID";
+            Query<BeltRank> query = session.createQuery(hql, BeltRank.class);
+            query.setParameter("currentRankId", currentRankId);
+            return query.list();
+        }
+    }
 }
