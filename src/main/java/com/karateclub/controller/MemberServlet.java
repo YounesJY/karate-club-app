@@ -341,18 +341,19 @@ public class MemberServlet extends HttpServlet {
             member.setEmergencyContactInfo(emergencyContact.trim());
         }
 
-        // Set belt rank - FIXED: Use the service to get the actual BeltRank object
+        // Set belt rank - fetch full entity rather than creating transient shell
         String beltRankId = request.getParameter("beltRankId");
         if (beltRankId != null && !beltRankId.trim().isEmpty()) {
             try {
                 int rankId = Integer.parseInt(beltRankId);
-                // You need to inject BeltRankService or get it from somewhere
-                // For now, let's create a temporary solution
-                BeltRank beltRank = new BeltRank();
-                beltRank.setRankID(rankId);
-                // Note: In production, you should fetch the complete BeltRank object
-                // BeltRank beltRank = beltRankService.getBeltRankById(rankId);
-                member.setLastBeltRank(beltRank);
+                BeltRankDAO beltRankDAO = new BeltRankDAO();
+                BeltRank beltRank = beltRankDAO.getById(rankId);
+                if (beltRank != null) {
+                    member.setLastBeltRank(beltRank);
+                } else {
+                    // If not found, leave null; service will default to white belt
+                    member.setLastBeltRank(null);
+                }
             } catch (NumberFormatException e) {
                 System.out.println("Error parsing belt rank ID: " + e.getMessage());
             }

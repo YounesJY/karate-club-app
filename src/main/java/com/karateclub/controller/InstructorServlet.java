@@ -5,6 +5,7 @@ import com.karateclub.service.InstructorService;
 import com.karateclub.service.InstructorServiceImpl;
 import com.karateclub.model.Instructor;
 import com.karateclub.model.Member;
+import com.karateclub.model.Person; // Added import
 import com.karateclub.service.exception.NotFoundException;
 import com.karateclub.service.exception.ValidationException;
 import com.karateclub.service.exception.BusinessRuleException;
@@ -13,7 +14,9 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet(name = "InstructorServlet", value = "/instructors")
 public class InstructorServlet extends HttpServlet {
@@ -91,6 +94,17 @@ public class InstructorServlet extends HttpServlet {
         List<Instructor> instructors = instructorService.getAllInstructors();
         request.setAttribute("instructors", instructors);
 
+        // Build a map of instructorId -> studentCount to avoid lazy loading in JSP
+        Map<Integer, Integer> studentCounts = new HashMap<>();
+        for (Instructor ins : instructors) {
+            try {
+                studentCounts.put(ins.getInstructorID(), instructorService.getInstructorStudentCount(ins.getInstructorID()));
+            } catch (Exception e) {
+                studentCounts.put(ins.getInstructorID(), 0);
+            }
+        }
+        request.setAttribute("studentCounts", studentCounts);
+
         RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/instructors/list.jsp");
         dispatcher.forward(request, response);
     }
@@ -122,6 +136,7 @@ public class InstructorServlet extends HttpServlet {
 
         request.setAttribute("instructor", instructor);
         request.setAttribute("students", students);
+        request.setAttribute("memberAssignments", instructor.getMemberInstructors()); // provide assignments with dates
 
         RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/instructors/students.jsp");
         dispatcher.forward(request, response);
@@ -233,8 +248,32 @@ public class InstructorServlet extends HttpServlet {
         if (qualification != null && !qualification.trim().isEmpty()) {
             instructor.setQualification(qualification.trim());
         }
-
-        // Set other properties as needed
-        // Note: In a real application, you would need to handle the Person association
+        // Ensure a Person object exists
+        if (instructor.getPerson() == null) {
+            instructor.setPerson(new Person());
+        }
+        // If editing, we receive a hidden personId
+        String personIdParam = request.getParameter("personId");
+        if (personIdParam != null && !personIdParam.trim().isEmpty()) {
+            try {
+                int personId = Integer.parseInt(personIdParam.trim());
+                if (personId > 0) {
+                    instructor.getPerson().setPersonID(personId);
+                }
+            } catch (NumberFormatException ignored) { }
+        }
+        // Set person fields from form
+        String name = request.getParameter("name");
+        if (name != null && !name.trim().isEmpty()) {
+            instructor.getPerson().setName(name.trim());
+        }
+        String address = request.getParameter("address");
+        if (address != null) {
+            instructor.getPerson().setAddress(address.trim());
+        }
+        String contactInfo = request.getParameter("contactInfo");
+        if (contactInfo != null && !contactInfo.trim().isEmpty()) {
+            instructor.getPerson().setContactInfo(contactInfo.trim());
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.karateclub.service;
 import com.karateclub.dao.InstructorDAO;
 import com.karateclub.dao.MemberDAO;
 import com.karateclub.dao.PersonDAO;
+import com.karateclub.dao.MemberInstructorDAO;
 import com.karateclub.model.Instructor;
 import com.karateclub.model.Member;
 import com.karateclub.model.Person;
@@ -19,17 +20,20 @@ public class InstructorServiceImpl implements InstructorService {
     private InstructorDAO instructorDAO;
     private MemberDAO memberDAO;
     private PersonDAO personDAO;
+    private MemberInstructorDAO memberInstructorDAO;
 
     public InstructorServiceImpl() {
         this.instructorDAO = new InstructorDAO();
         this.memberDAO = new MemberDAO();
         this.personDAO = new PersonDAO();
+        this.memberInstructorDAO = new MemberInstructorDAO();
     }
 
     public InstructorServiceImpl(InstructorDAO instructorDAO, MemberDAO memberDAO, PersonDAO personDAO) {
         this.instructorDAO = instructorDAO;
         this.memberDAO = memberDAO;
         this.personDAO = personDAO;
+        this.memberInstructorDAO = new MemberInstructorDAO();
     }
 
     @Override
@@ -50,33 +54,52 @@ public class InstructorServiceImpl implements InstructorService {
 
     @Override
     public Instructor createInstructor(Instructor instructor) {
-        validateInstructor(instructor);
-
-        // Business rule: Person must exist and not already be an instructor
-        if (instructor.getPerson() == null) {
-            throw new ValidationException("Instructor must have an associated person");
+        validateInstructorWithPerson(instructor);
+        // If person has no ID (0), persist via personDAO; else merge existing
+        Person p = instructor.getPerson();
+        if (p.getPersonID() == 0) {
+            personDAO.save(p);
+        } else {
+            Person existing = personDAO.getById(p.getPersonID());
+            if (existing == null) {
+                // treat as new if ID provided but not found
+                p.setPersonID(0);
+                personDAO.save(p);
+            } else {
+                // update fields then merge
+                existing.setName(p.getName());
+                existing.setAddress(p.getAddress());
+                existing.setContactInfo(p.getContactInfo());
+                personDAO.update(existing);
+                instructor.setPerson(existing);
+            }
         }
-
-        Person person = personDAO.getById(instructor.getPerson().getPersonID());
-        if (person == null) {
-            throw new NotFoundException("Person not found with ID: " + instructor.getPerson().getPersonID());
-        }
-
-        // Check if person is already an instructor
-        Instructor existingInstructor = instructorDAO.findByPersonId(person.getPersonID());
-        if (existingInstructor != null) {
-            throw new BusinessRuleException("Person is already an instructor");
-        }
-
         instructorDAO.save(instructor);
         return instructor;
     }
 
     @Override
     public Instructor updateInstructor(Instructor instructor) {
-        validateInstructor(instructor);
+        validateInstructorWithPerson(instructor);
         validateInstructorExists(instructor.getInstructorID());
-
+        // Merge person changes
+        Person p = instructor.getPerson();
+        if (p != null) {
+            if (p.getPersonID() == 0) {
+                personDAO.save(p);
+            } else {
+                Person managed = personDAO.getById(p.getPersonID());
+                if (managed != null) {
+                    managed.setName(p.getName());
+                    managed.setAddress(p.getAddress());
+                    managed.setContactInfo(p.getContactInfo());
+                    personDAO.update(managed);
+                    instructor.setPerson(managed);
+                } else {
+                    personDAO.save(p);
+                }
+            }
+        }
         instructorDAO.update(instructor);
         return instructor;
     }
@@ -123,31 +146,22 @@ public class InstructorServiceImpl implements InstructorService {
         validateInstructorId(instructorId);
         validateMemberId(memberId);
 
-        Instructor instructor = getInstructorById(instructorId);
-        Member member = memberDAO.getById(memberId);
-
-        if (member == null) {
+        // Validate both sides exist
+        if (instructorDAO.getById(instructorId) == null) {
+            throw new NotFoundException("Instructor not found with ID: " + instructorId);
+        }
+        if (memberDAO.getById(memberId) == null) {
             throw new NotFoundException("Member not found with ID: " + memberId);
         }
 
-        // Check if assignment already exists
-        boolean alreadyAssigned = instructor.getMemberInstructors().stream()
-                .anyMatch(mi -> mi.getMember().getMemberID() == memberId);
-
-        if (alreadyAssigned) {
+        // Check if assignment already exists via DAO
+        if (memberInstructorDAO.assignmentExists(memberId, instructorId)) {
             throw new BusinessRuleException("Member is already assigned to this instructor");
         }
 
-        // Create new assignment
-        MemberInstructor assignment = new MemberInstructor();
-        assignment.setInstructor(instructor);
-        assignment.setMember(member);
-        assignment.setAssignDate(LocalDateTime.now());
-
-        instructor.getMemberInstructors().add(assignment);
-        instructorDAO.update(instructor);
-
-        return instructor;
+        // Persist assignment
+        memberInstructorDAO.createAssignment(instructorId, memberId, LocalDateTime.now());
+        return getInstructorById(instructorId);
     }
 
     @Override
@@ -155,19 +169,17 @@ public class InstructorServiceImpl implements InstructorService {
         validateInstructorId(instructorId);
         validateMemberId(memberId);
 
-        Instructor instructor = getInstructorById(instructorId);
+        // Validate exists
+        if (instructorDAO.getById(instructorId) == null) {
+            throw new NotFoundException("Instructor not found with ID: " + instructorId);
+        }
 
-        // Remove the assignment
-        boolean removed = instructor.getMemberInstructors().removeIf(
-                mi -> mi.getMember().getMemberID() == memberId
-        );
-
+        // Remove via DAO
+        boolean removed = memberInstructorDAO.removeAssignment(memberId, instructorId);
         if (!removed) {
             throw new NotFoundException("Member is not assigned to this instructor");
         }
-
-        instructorDAO.update(instructor);
-        return instructor;
+        return getInstructorById(instructorId);
     }
 
     @Override
@@ -235,6 +247,25 @@ public class InstructorServiceImpl implements InstructorService {
         }
         if (instructor.getQualification() == null || instructor.getQualification().trim().isEmpty()) {
             throw new ValidationException("Instructor qualification is required");
+        }
+    }
+
+    private void validateInstructorWithPerson(Instructor instructor) {
+        if (instructor == null) {
+            throw new ValidationException("Instructor cannot be null");
+        }
+        if (instructor.getPerson() == null) {
+            throw new ValidationException("Instructor must include person details");
+        }
+        Person p = instructor.getPerson();
+        if (p.getName() == null || p.getName().trim().isEmpty()) {
+            throw new ValidationException("Person name is required");
+        }
+        if (p.getContactInfo() == null || p.getContactInfo().trim().isEmpty()) {
+            throw new ValidationException("Contact info is required");
+        }
+        if (instructor.getQualification() == null || instructor.getQualification().trim().isEmpty()) {
+            throw new ValidationException("Qualification is required");
         }
     }
 

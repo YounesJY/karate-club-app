@@ -7,6 +7,7 @@ import java.time.LocalDate;
 @Table(name = "Payment")
 public class Payment {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "PaymentID")
     private int paymentID;
 

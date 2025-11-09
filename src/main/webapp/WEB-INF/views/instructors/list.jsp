@@ -54,8 +54,10 @@
                             <span class="badge bg-info">${instructor.qualification}</span>
                         </p>
                         <p class="card-text text-muted">
-                            <small>Students: ${instructorService.getInstructorStudentCount(instructor.instructorID)}</small>
+                            <small>Students: ${instructor.memberInstructors.size()}</small>
                         </p>
+                        <p class="card-text small mb-1"><i class="fas fa-envelope"></i> ${instructor.person.contactInfo}</p>
+                        <p class="card-text small text-muted">${instructor.person.address}</p>
                         <div class="btn-group btn-group-sm">
                             <a href="instructors?action=viewStudents&id=${instructor.instructorID}"
                                class="btn btn-outline-primary">

@@ -8,17 +8,18 @@ import java.util.List;
 @Table(name = "Member")
 public class Member {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "MemberID")
     private int memberID;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL) // Add CascadeType.ALL or CascadeType.PERSIST
     @JoinColumn(name = "PersonID", nullable = false)
     private Person person;
 
     @Column(name = "EmergencyContactInfo", length = 100, nullable = false)
     private String emergencyContactInfo;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "LastBeltRank", nullable = false)
     private BeltRank lastBeltRank;
 

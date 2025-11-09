@@ -53,11 +53,16 @@ public class MemberServiceImpl implements MemberService {
         // Business rule: New members start as active
         member.setActive(true);
 
-        // Business rule: Set default belt rank if not provided
-        if (member.getLastBeltRank() == null) {
-            BeltRank whiteBelt = beltRankDAO.getById(1); // White belt
-            member.setLastBeltRank(whiteBelt);
+        // Always resolve BeltRank to a managed entity (use provided ID or default to white belt = 1)
+        int desiredRankId = 1; // default white belt
+        if (member.getLastBeltRank() != null && member.getLastBeltRank().getRankID() > 0) {
+            desiredRankId = member.getLastBeltRank().getRankID();
         }
+        BeltRank managedRank = beltRankDAO.getById(desiredRankId);
+        if (managedRank == null) {
+            throw new NotFoundException("Belt rank not found with ID: " + desiredRankId);
+        }
+        member.setLastBeltRank(managedRank);
 
         memberDAO.save(member);
         return member;
@@ -282,3 +287,4 @@ public class MemberServiceImpl implements MemberService {
         }
     }
 }
+
