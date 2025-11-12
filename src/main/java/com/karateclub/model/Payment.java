@@ -24,8 +24,7 @@ public class Payment {
     // Constructors
     public Payment() {}
 
-    public Payment(int paymentID, double amount, LocalDate date, Member member) {
-        this.paymentID = paymentID;
+    public Payment(double amount, LocalDate date, Member member) {
         this.amount = amount;
         this.date = date;
         this.member = member;

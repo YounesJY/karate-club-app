@@ -41,9 +41,8 @@ public class Member {
     // Constructors
     public Member() {}
 
-    public Member(int memberID, Person person, String emergencyContactInfo,
+    public Member(Person person, String emergencyContactInfo,
                   BeltRank lastBeltRank, boolean isActive) {
-        this.memberID = memberID;
         this.person = person;
         this.emergencyContactInfo = emergencyContactInfo;
         this.lastBeltRank = lastBeltRank;

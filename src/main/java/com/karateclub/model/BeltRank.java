@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 @Table(name = "BeltRank")
 public class BeltRank {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "RankID")
     private int rankID;
 
@@ -18,8 +19,7 @@ public class BeltRank {
     // Constructors
     public BeltRank() {}
 
-    public BeltRank(int rankID, String rankName, double testFees) {
-        this.rankID = rankID;
+    public BeltRank(String rankName, double testFees) {
         this.rankName = rankName;
         this.testFees = testFees;
     }

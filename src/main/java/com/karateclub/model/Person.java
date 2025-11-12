@@ -22,8 +22,7 @@ public class Person {
     // Constructors
     public Person() {}
 
-    public Person(int personID, String name, String address, String contactInfo) {
-        this.personID = personID;
+    public Person(String name, String address, String contactInfo) {
         this.name = name;
         this.address = address;
         this.contactInfo = contactInfo;

@@ -9,7 +9,7 @@
         <property name="hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
         <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/KarateClub?useSSL=false&amp;serverTimezone=UTC</property>
         <property name="hibernate.connection.username">root</property>
-        <property name="hibernate.connection.password">2004</property>
+        <property name="hibernate.connection.password">0912</property>
 
         <!-- SQL dialect -->
         <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
@@ -28,10 +28,15 @@
         <property name="hibernate.enable_lazy_load_no_trans">true</property>
         <property name="hibernate.max_fetch_depth">3</property>
 
-        <!-- Mention entity classes here (we'll add them as we create) -->
-        <!-- <mapping class="com.karateclub.model.Person"/> -->
-        <!-- <mapping class="com.karateclub.model.Member"/> -->
-        <!-- We'll uncomment these as we create the entities -->
+        <!-- Entity class mappings - UNCOMMENT THESE -->
+        <mapping class="com.karateclub.model.Person"/>
+        <mapping class="com.karateclub.model.Member"/>
+        <mapping class="com.karateclub.model.Instructor"/>
+        <mapping class="com.karateclub.model.BeltRank"/>
+        <mapping class="com.karateclub.model.BeltTest"/>
+        <mapping class="com.karateclub.model.Payment"/>
+        <mapping class="com.karateclub.model.SubscriptionPeriod"/>
+        <mapping class="com.karateclub.model.MemberInstructor"/>
 
     </session-factory>
 </hibernate-configuration>

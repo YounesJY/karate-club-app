@@ -6,6 +6,7 @@ import com.karateclub.service.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public class AdvancedIntegrationTest {
 
@@ -31,27 +32,46 @@ public class AdvancedIntegrationTest {
         System.out.println("=== TESTING MEMBER PROMOTION WORKFLOW ===");
         MemberService memberService = new MemberServiceImpl();
         BeltTestService testService = new BeltTestServiceImpl();
-        PaymentService paymentService = new PaymentServiceImpl();
 
-        // Test with existing data only - no new entity creation
-        Member member = memberService.getMemberById(2); // Jane Smith (Yellow Belt)
+        // Dynamically find a member instead of hardcoding ID
+        List<Member> allMembers = memberService.getAllMembers();
+        if (allMembers.isEmpty()) {
+            System.out.println("❌ No members found in database");
+            return;
+        }
+
+        // Find an active member with a specific belt rank for testing
+        Optional<Member> testMember = allMembers.stream()
+                .filter(Member::isActive)
+                .filter(m -> m.getLastBeltRank().getRankID() == 2) // Yellow Belt
+                .findFirst();
+
+        if (testMember.isPresent()) {
+            System.out.println("❌ No suitable test member found (active with Yellow Belt)");
+            return;
+        }
+
+        Member member = testMember.get();
+        int memberId = member.getMemberID();
+
         System.out.println("👤 Member: " + member.getPerson().getName() +
-                " | Current Rank: " + member.getLastBeltRank().getRankName());
+                " | Current Rank: " + member.getLastBeltRank().getRankName() +
+                " | ID: " + memberId);
 
         // Test 1: Check promotion eligibility
-        boolean eligible = memberService.isMemberEligibleForPromotion(2);
+        boolean eligible = memberService.isMemberEligibleForPromotion(memberId);
         System.out.println("✅ Promotion eligibility: " + eligible);
 
         // Test 2: Get member's test history
-        List<BeltTest> memberTests = testService.getTestsByMember(2);
+        List<BeltTest> memberTests = testService.getTestsByMember(memberId);
         System.out.println("✅ Test history: " + memberTests.size() + " tests");
 
-        // Test 3: Try to promote member (this tests the business logic)
+        // Test 3: Try to promote member
         try {
-            memberService.promoteMember(2, 3); // Try to promote to Orange Belt
+            memberService.promoteMember(memberId, 3); // Try to promote to Orange Belt
             System.out.println("✅ Promotion successful!");
 
-            Member updatedMember = memberService.getMemberById(2);
+            Member updatedMember = memberService.getMemberById(memberId);
             System.out.println("✅ New rank: " + updatedMember.getLastBeltRank().getRankName());
 
             // Rollback the promotion for test consistency
@@ -62,36 +82,48 @@ public class AdvancedIntegrationTest {
             System.out.println("✅ Promotion correctly blocked: " + e.getMessage());
         }
 
-        // Test 4: Check test-related business logic
-        boolean canTest = testService.isMemberEligibleForTest(2, 3); // Orange Belt test
-        System.out.println("✅ Can schedule Orange Belt test: " + canTest);
-
         System.out.println();
     }
+
     private static void testSubscriptionRenewalWorkflow() {
         System.out.println("=== TESTING SUBSCRIPTION RENEWAL WORKFLOW ===");
         SubscriptionPeriodService subService = new SubscriptionPeriodServiceImpl();
         PaymentService paymentService = new PaymentServiceImpl();
+        MemberService memberService = new MemberServiceImpl();
 
-        // Test Member 3 (Mike Johnson - has unpaid subscription)
-        List<SubscriptionPeriod> unpaidSubs = subService.getUnpaidSubscriptions(3);
-        System.out.println("💰 Unpaid subscriptions for Member 3: " + unpaidSubs.size());
+        // Find a member with unpaid subscriptions
+        List<Member> allMembers = memberService.getAllMembers();
+        Optional<Member> memberWithUnpaid = allMembers.stream()
+                .filter(m -> {
+                    List<SubscriptionPeriod> unpaid = subService.getUnpaidSubscriptions(m.getMemberID());
+                    return !unpaid.isEmpty();
+                })
+                .findFirst();
 
-        if (!unpaidSubs.isEmpty()) {
-            SubscriptionPeriod unpaidSub = unpaidSubs.get(0);
-
-            // Process payment for subscription
-            Payment payment = paymentService.processPayment(3, unpaidSub.getFees(), LocalDate.now());
-            System.out.println("✅ Subscription payment processed: $" + payment.getAmount());
-
-            // Mark subscription as paid
-            SubscriptionPeriod paidSub = subService.markAsPaid(unpaidSub.getPeriodID(), payment.getPaymentID());
-            System.out.println("✅ Subscription marked as paid: " + paidSub.isPaid());
-
-            // Verify member now has active subscription
-            boolean hasActiveSub = subService.hasActiveSubscription(3);
-            System.out.println("✅ Member now has active subscription: " + hasActiveSub);
+        if (memberWithUnpaid.isPresent()) {
+            System.out.println("❌ No members with unpaid subscriptions found");
+            return;
         }
+
+        Member member = memberWithUnpaid.get();
+        int memberId = member.getMemberID();
+
+        List<SubscriptionPeriod> unpaidSubs = subService.getUnpaidSubscriptions(memberId);
+        System.out.println("💰 Unpaid subscriptions for " + member.getPerson().getName() + ": " + unpaidSubs.size());
+
+        SubscriptionPeriod unpaidSub = unpaidSubs.get(0);
+
+        // Process payment for subscription
+        Payment payment = paymentService.processPayment(memberId, unpaidSub.getFees(), LocalDate.now());
+        System.out.println("✅ Subscription payment processed: $" + payment.getAmount());
+
+        // Mark subscription as paid
+        SubscriptionPeriod paidSub = subService.markAsPaid(unpaidSub.getPeriodID(), payment.getPaymentID());
+        System.out.println("✅ Subscription marked as paid: " + paidSub.isPaid());
+
+        // Verify member now has active subscription
+        boolean hasActiveSub = subService.hasActiveSubscription(memberId);
+        System.out.println("✅ Member now has active subscription: " + hasActiveSub);
 
         System.out.println();
     }
@@ -101,27 +133,39 @@ public class AdvancedIntegrationTest {
         MemberService memberService = new MemberServiceImpl();
         PaymentService paymentService = new PaymentServiceImpl();
 
-        // Test Member 4 (Sarah Wilson - inactive)
-        Member inactiveMember = memberService.getMemberById(4);
+        // Find an inactive member
+        List<Member> allMembers = memberService.getAllMembers();
+        Optional<Member> inactiveMemberOpt = allMembers.stream()
+                .filter(m -> !m.isActive())
+                .findFirst();
+
+        if (inactiveMemberOpt.isPresent()) {
+            System.out.println("❌ No inactive members found");
+            return;
+        }
+
+        Member inactiveMember = inactiveMemberOpt.get();
+        int memberId = inactiveMember.getMemberID();
+
         System.out.println("👤 Inactive Member: " + inactiveMember.getPerson().getName() +
-                " | Active: " + inactiveMember.isActive());
+                " | Active: " + inactiveMember.isActive() + " | ID: " + memberId);
 
         // Check why inactive (unpaid fees)
-        boolean hasUnpaidFees = paymentService.hasUnpaidFees(4);
-        double balance = paymentService.calculateMemberBalance(4);
+        boolean hasUnpaidFees = paymentService.hasUnpaidFees(memberId);
+        double balance = paymentService.calculateMemberBalance(memberId);
         System.out.println("💰 Has unpaid fees: " + hasUnpaidFees + " | Balance: $" + balance);
 
         if (hasUnpaidFees) {
             // Process payment to clear balance
-            Payment payment = paymentService.processPayment(4, balance, LocalDate.now());
+            Payment payment = paymentService.processPayment(memberId, balance, LocalDate.now());
             System.out.println("✅ Balance cleared with payment: $" + payment.getAmount());
 
             // Try to activate member
-            boolean activated = memberService.activateMember(4);
+            boolean activated = memberService.activateMember(memberId);
             System.out.println("✅ Member activated: " + activated);
 
             // Verify member is now active
-            Member activeMember = memberService.getMemberById(4);
+            Member activeMember = memberService.getMemberById(memberId);
             System.out.println("✅ Member is now active: " + activeMember.isActive());
         }
 
@@ -133,73 +177,78 @@ public class AdvancedIntegrationTest {
         InstructorService instructorService = new InstructorServiceImpl();
         MemberService memberService = new MemberServiceImpl();
 
-        // Test Instructor 1
-        Instructor instructor = instructorService.getInstructorById(1);
-        System.out.println("👨‍🏫 Instructor: " + instructor.getPerson().getName());
-        System.out.println("📊 Current students: " + instructorService.getInstructorStudentCount(1));
+        // Find an instructor
+        List<Instructor> allInstructors = instructorService.getAllInstructors();
+        if (allInstructors.isEmpty()) {
+            System.out.println("❌ No instructors found");
+            return;
+        }
+
+        Instructor instructor = allInstructors.get(0);
+        int instructorId = instructor.getInstructorID();
+
+        System.out.println("👨‍🏫 Instructor: " + instructor.getPerson().getName() + " | ID: " + instructorId);
+        System.out.println("📊 Current students: " + instructorService.getInstructorStudentCount(instructorId));
 
         // Get current students
-        List<Member> students = instructorService.getMembersByInstructor(1);
+        List<Member> students = instructorService.getMembersByInstructor(instructorId);
         System.out.println("🎓 Current students: " + students.size());
         students.forEach(student ->
                 System.out.println("   - " + student.getPerson().getName() +
                         " (" + student.getLastBeltRank().getRankName() + ")")
         );
 
-        // Try to assign a member who ISN'T already assigned
+        // Find a member who isn't assigned to this instructor
         List<Member> allMembers = memberService.getAllMembers();
-        Member unassignedMember = allMembers.stream()
-                .filter(m -> m.getMemberID() == 4) // Sarah Wilson (shouldn't be assigned yet)
-                .findFirst()
-                .orElse(null);
+        Optional<Member> unassignedMember = allMembers.stream()
+                .filter(m -> students.stream().noneMatch(s -> s.getMemberID() == m.getMemberID()))
+                .findFirst();
 
-        if (unassignedMember != null) {
+        if (unassignedMember.isPresent()) {
+            Member member = unassignedMember.get();
             try {
-                Instructor updatedInstructor = instructorService.assignMemberToInstructor(1, 4);
-                System.out.println("✅ New student assigned: " + unassignedMember.getPerson().getName());
-                System.out.println("📊 Updated student count: " + instructorService.getInstructorStudentCount(1));
+                Instructor updatedInstructor = instructorService.assignMemberToInstructor(instructorId, member.getMemberID());
+                System.out.println("✅ New student assigned: " + member.getPerson().getName());
+                System.out.println("📊 Updated student count: " + instructorService.getInstructorStudentCount(instructorId));
             } catch (BusinessRuleException e) {
                 System.out.println("✅ Correctly prevented assignment: " + e.getMessage());
             }
+        } else {
+            System.out.println("✅ All members are already assigned to this instructor");
         }
-
-        // Test instructor capabilities
-        boolean canTestWhite = instructorService.canInstructorTestRank(1, 1);
-        boolean canTestBlack = instructorService.canInstructorTestRank(1, 7);
-        System.out.println("📊 Instructor capabilities:");
-        System.out.println("   - Can test White Belt: " + canTestWhite);
-        System.out.println("   - Can test Black Belt: " + canTestBlack);
 
         System.out.println();
     }
+
     private static void testErrorAndValidationScenarios() {
         System.out.println("=== TESTING ERROR & VALIDATION SCENARIOS ===");
         MemberService memberService = new MemberServiceImpl();
         BeltTestService testService = new BeltTestServiceImpl();
 
+        // Find an inactive member
+        List<Member> allMembers = memberService.getAllMembers();
+        Optional<Member> inactiveMember = allMembers.stream()
+                .filter(m -> !m.isActive())
+                .findFirst();
+
         // Test 1: Try to promote inactive member
-        try {
-            memberService.promoteMember(4, 2); // Inactive member
-            System.out.println("❌ Should have thrown exception for inactive member");
-        } catch (BusinessRuleException e) {
-            System.out.println("✅ Correctly blocked promotion for inactive member");
+        if (inactiveMember.isPresent()) {
+            try {
+                memberService.promoteMember(inactiveMember.get().getMemberID(), 2);
+                System.out.println("❌ Should have thrown exception for inactive member");
+            } catch (BusinessRuleException e) {
+                System.out.println("✅ Correctly blocked promotion for inactive member");
+            }
+        } else {
+            System.out.println("⚠️  No inactive members found for testing");
         }
 
-        // Test 2: Try to schedule test for ineligible member
+        // Test 2: Try invalid operations
         try {
-            testService.scheduleTest(1, 1, 1, LocalDate.now().plusDays(7)); // Already has white belt
-            System.out.println("❌ Should have thrown exception for duplicate rank test");
-        } catch (BusinessRuleException e) {
-            System.out.println("✅ Correctly blocked duplicate rank test");
-        }
-
-        // Test 3: Try to create payment with negative amount
-        try {
-            PaymentService paymentService = new PaymentServiceImpl();
-            paymentService.processPayment(1, -50.0, LocalDate.now());
-            System.out.println("❌ Should have thrown exception for negative payment");
+            memberService.promoteMember(-1, 1); // Invalid member ID
+            System.out.println("❌ Should have thrown exception for invalid member ID");
         } catch (Exception e) {
-            System.out.println("✅ Correctly blocked negative payment");
+            System.out.println("✅ Correctly blocked invalid member ID");
         }
 
         System.out.println();

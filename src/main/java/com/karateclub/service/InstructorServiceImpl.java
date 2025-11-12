@@ -55,25 +55,31 @@ public class InstructorServiceImpl implements InstructorService {
     @Override
     public Instructor createInstructor(Instructor instructor) {
         validateInstructorWithPerson(instructor);
-        // If person has no ID (0), persist via personDAO; else merge existing
+
         Person p = instructor.getPerson();
+
+        // Always save the Person first when creating a new Instructor
         if (p.getPersonID() == 0) {
+            // This is a new Person - save it first
             personDAO.save(p);
         } else {
+            // This Person already exists - update it
             Person existing = personDAO.getById(p.getPersonID());
-            if (existing == null) {
-                // treat as new if ID provided but not found
-                p.setPersonID(0);
-                personDAO.save(p);
-            } else {
-                // update fields then merge
+            if (existing != null) {
+                // Update the existing person
                 existing.setName(p.getName());
                 existing.setAddress(p.getAddress());
                 existing.setContactInfo(p.getContactInfo());
                 personDAO.update(existing);
                 instructor.setPerson(existing);
+            } else {
+                // Person ID was provided but doesn't exist - treat as new
+                p.setPersonID(0);
+                personDAO.save(p);
             }
         }
+
+        // Now save the instructor with the persisted Person
         instructorDAO.save(instructor);
         return instructor;
     }

@@ -34,8 +34,7 @@ public class Instructor {
         this.memberInstructors = memberInstructors;
     }
 
-    public Instructor(int instructorID, Person person, String qualification) {
-        this.instructorID = instructorID;
+    public Instructor( Person person, String qualification) {
         this.person = person;
         this.qualification = qualification;
     }

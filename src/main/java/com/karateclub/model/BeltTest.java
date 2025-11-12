@@ -7,6 +7,7 @@ import java.time.LocalDate;
 @Table(name = "BeltTest")
 public class BeltTest {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "TestID")
     private int testID;
 
@@ -35,9 +36,8 @@ public class BeltTest {
     // Constructors
     public BeltTest() {}
 
-    public BeltTest(int testID, Member member, BeltRank rank, boolean result,
+    public BeltTest(Member member, BeltRank rank, boolean result,
                     LocalDate date, Instructor testedByInstructor, Payment payment) {
-        this.testID = testID;
         this.member = member;
         this.rank = rank;
         this.result = result;

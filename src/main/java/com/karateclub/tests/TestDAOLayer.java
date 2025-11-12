@@ -40,7 +40,7 @@ public class TestDAOLayer {
         System.out.println("\n=== Testing CRUD Operations ===");
 
         // CREATE - Add new person
-        Person newPerson = new Person(7, "Test User", "Test Address", "555-9999");
+        Person newPerson = new Person( "Test User", "Test Address", "555-9999");
         personDAO.save(newPerson);
         System.out.println("✅ Created new person: " + newPerson.getName());
 

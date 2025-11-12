@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Table(name = "SubscriptionPeriods")
 public class SubscriptionPeriod {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "PeriodID")
     private int periodID;
 
@@ -33,9 +34,8 @@ public class SubscriptionPeriod {
     // Constructors
     public SubscriptionPeriod() {}
 
-    public SubscriptionPeriod(int periodID, LocalDateTime startDate, LocalDateTime endDate,
+    public SubscriptionPeriod(LocalDateTime startDate, LocalDateTime endDate,
                               double fees, boolean paid, Member member, Payment payment) {
-        this.periodID = periodID;
         this.startDate = startDate;
         this.endDate = endDate;
         this.fees = fees;
