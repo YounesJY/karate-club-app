@@ -2,6 +2,7 @@ package com.karateclub.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "Payment")
@@ -43,6 +44,17 @@ public class Payment {
 
     public Member getMember() { return member; }
     public void setMember(Member member) { this.member = member; }
+
+    @Transient
+    public String getFormattedDate() {
+        return date != null ? date.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) : "";
+    }
+
+    // Optionally ISO string
+    @Transient
+    public String getIsoDate() {
+        return date != null ? date.toString() : "";
+    }
 
     @Override
     public String toString() {

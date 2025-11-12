@@ -3,6 +3,7 @@ package com.karateclub.dao;
 import com.karateclub.model.BeltTest;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.hibernate.query.MutationQuery;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -46,6 +47,23 @@ public class BeltTestDAO extends GenericDAO<BeltTest> {
             Query<Long> query = session.createQuery(hql, Long.class);
             query.setParameter("memberID", memberID);
             return query.uniqueResult();
+        }
+    }
+
+    // Find belt tests by payment ID
+    public List<BeltTest> findByPayment(int paymentID) {
+        return findByHQL("FROM BeltTest bt WHERE bt.payment.paymentID = ?1", paymentID);
+    }
+
+    // Nullify payment reference for belt tests
+    public void nullifyPaymentReference(int paymentID) {
+        try (Session session = getSession()) {
+            session.beginTransaction();
+            String hql = "UPDATE BeltTest bt SET bt.payment = null WHERE bt.payment.paymentID = :paymentID";
+            MutationQuery query = session.createMutationQuery(hql);
+            query.setParameter("paymentID", paymentID);
+            query.executeUpdate();
+            session.getTransaction().commit();
         }
     }
 }

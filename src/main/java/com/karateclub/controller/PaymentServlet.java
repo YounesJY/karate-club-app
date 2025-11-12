@@ -6,12 +6,16 @@ import com.karateclub.service.PaymentServiceImpl;
 import com.karateclub.model.Payment;
 import com.karateclub.service.exception.NotFoundException;
 import com.karateclub.service.exception.ValidationException;
+import com.karateclub.service.exception.BusinessRuleException;
+import com.karateclub.dao.MemberDAO;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @WebServlet(name = "PaymentServlet", value = "/payments")
@@ -25,7 +29,7 @@ public class PaymentServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws ServletException {
 
         String action = request.getParameter("action");
         if (action == null) action = "list";
@@ -44,6 +48,9 @@ public class PaymentServlet extends HttpServlet {
                 case "report":
                     showReport(request, response);
                     break;
+                case "delete":
+                    deletePayment(request, response);
+                    break;
                 default:
                     listPayments(request, response);
             }
@@ -54,7 +61,7 @@ public class PaymentServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws ServletException {
 
         String action = request.getParameter("action");
         if (action == null) action = "list";
@@ -80,6 +87,23 @@ public class PaymentServlet extends HttpServlet {
 
         List<Payment> payments = paymentService.getAllPayments();
         request.setAttribute("payments", payments);
+
+        // Dashboard metrics
+        double totalRevenue = payments.stream().mapToDouble(Payment::getAmount).sum();
+        double avgPayment = payments.isEmpty() ? 0.0 : totalRevenue / payments.size();
+
+        YearMonth ym = YearMonth.now();
+        LocalDate monthStart = ym.atDay(1);
+        LocalDate monthEnd = ym.atEndOfMonth();
+        double monthRevenue = paymentService.calculateTotalRevenue(monthStart, monthEnd);
+
+        MemberDAO memberDAO = new MemberDAO();
+        int unpaidCount = memberDAO.findMembersWithUnpaidSubscriptions().size();
+
+        request.setAttribute("totalRevenue", totalRevenue);
+        request.setAttribute("monthRevenue", monthRevenue);
+        request.setAttribute("unpaidCount", unpaidCount);
+        request.setAttribute("avgPayment", avgPayment);
 
         RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/payments/list.jsp");
         dispatcher.forward(request, response);
@@ -133,6 +157,9 @@ public class PaymentServlet extends HttpServlet {
             request.setAttribute("payments", payments);
             request.setAttribute("startDate", startDate);
             request.setAttribute("endDate", endDate);
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+            request.setAttribute("startDateFormatted", startDate.format(fmt));
+            request.setAttribute("endDateFormatted", endDate.format(fmt));
         }
 
         RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/payments/report.jsp");
@@ -159,13 +186,13 @@ public class PaymentServlet extends HttpServlet {
     }
 
     private void processPayment(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws IOException {
 
         try {
             int memberId = Integer.parseInt(request.getParameter("memberId"));
             double amount = Double.parseDouble(request.getParameter("amount"));
 
-            Payment payment = paymentService.processPayment(memberId, amount, LocalDate.now());
+            paymentService.processPayment(memberId, amount, LocalDate.now());
             request.getSession().setAttribute("successMessage", "Payment processed successfully!");
             response.sendRedirect("payments?action=byMember&memberId=" + memberId);
 
@@ -173,6 +200,18 @@ public class PaymentServlet extends HttpServlet {
             request.getSession().setAttribute("errorMessage", "Error processing payment: " + e.getMessage());
             response.sendRedirect("payments");
         }
+    }
+
+    private void deletePayment(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        try {
+            int id = Integer.parseInt(request.getParameter("id"));
+            paymentService.deletePayment(id);
+            request.getSession().setAttribute("successMessage", "Payment deleted successfully!");
+        } catch (BusinessRuleException | NotFoundException | ValidationException e) {
+            request.getSession().setAttribute("errorMessage", "Error deleting payment: " + e.getMessage());
+        }
+        response.sendRedirect("payments");
     }
 
     private void setPaymentFromRequest(Payment payment, HttpServletRequest request) {
@@ -188,12 +227,6 @@ public class PaymentServlet extends HttpServlet {
             payment.setDate(LocalDate.parse(dateStr));
         }
 
-        // Set member association
-        String memberIdStr = request.getParameter("memberId");
-        if (memberIdStr != null && !memberIdStr.trim().isEmpty()) {
-            // You would need to get the Member object from MemberService
-            // Member member = memberService.getMemberById(Integer.parseInt(memberIdStr));
-            // payment.setMember(member);
-        }
+        // Note: Member association intentionally left to service layer in processPayment
     }
 }

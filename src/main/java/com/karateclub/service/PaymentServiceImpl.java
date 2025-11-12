@@ -4,6 +4,7 @@ import com.karateclub.dao.PaymentDAO;
 import com.karateclub.dao.MemberDAO;
 import com.karateclub.dao.BeltRankDAO;
 import com.karateclub.dao.SubscriptionPeriodDAO;
+import com.karateclub.dao.BeltTestDAO;
 import com.karateclub.model.Payment;
 import com.karateclub.model.Member;
 import com.karateclub.model.BeltRank;
@@ -13,6 +14,7 @@ import com.karateclub.service.exception.ValidationException;
 import com.karateclub.service.exception.BusinessRuleException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,20 +24,24 @@ public class PaymentServiceImpl implements PaymentService {
     private MemberDAO memberDAO;
     private BeltRankDAO beltRankDAO;
     private SubscriptionPeriodDAO subscriptionPeriodDAO;
+    private BeltTestDAO beltTestDAO;
 
     public PaymentServiceImpl() {
         this.paymentDAO = new PaymentDAO();
         this.memberDAO = new MemberDAO();
         this.beltRankDAO = new BeltRankDAO();
         this.subscriptionPeriodDAO = new SubscriptionPeriodDAO();
+        this.beltTestDAO = new BeltTestDAO();
     }
 
     public PaymentServiceImpl(PaymentDAO paymentDAO, MemberDAO memberDAO,
-                              BeltRankDAO beltRankDAO, SubscriptionPeriodDAO subscriptionPeriodDAO) {
+                              BeltRankDAO beltRankDAO, SubscriptionPeriodDAO subscriptionPeriodDAO,
+                              BeltTestDAO beltTestDAO) {
         this.paymentDAO = paymentDAO;
         this.memberDAO = memberDAO;
         this.beltRankDAO = beltRankDAO;
         this.subscriptionPeriodDAO = subscriptionPeriodDAO;
+        this.beltTestDAO = beltTestDAO;
     }
 
     @Override
@@ -69,7 +75,67 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         paymentDAO.save(payment);
+
+        // Automatically create or extend subscription period when payment is made
+        createOrExtendSubscription(payment);
+
         return payment;
+    }
+
+    /**
+     * Creates or extends a subscription period when a payment is made
+     */
+    private void createOrExtendSubscription(Payment payment) {
+        try {
+            Member member = payment.getMember();
+            if (member == null) {
+                return; // No member associated with payment
+            }
+
+            int memberId = member.getMemberID();
+
+            // Check if member has any subscription (active or expired)
+            SubscriptionPeriod latestSubscription = subscriptionPeriodDAO.getLatestSubscription(memberId);
+
+            LocalDateTime startDate;
+            LocalDateTime endDate;
+
+            if (latestSubscription != null && latestSubscription.getEndDate().isAfter(LocalDateTime.now())) {
+                // Extend existing active subscription
+                startDate = latestSubscription.getEndDate();
+                // Add 30 days (1 month) for every 100 units of payment
+                int daysToAdd = (int) ((payment.getAmount() / 100.0) * 30);
+                if (daysToAdd < 30) {
+                    daysToAdd = 30; // Minimum 1 month
+                }
+                endDate = startDate.plusDays(daysToAdd);
+            } else {
+                // Create new subscription (if no subscription or if expired)
+                startDate = LocalDateTime.now();
+                // Add 30 days (1 month) for every 100 units of payment
+                int daysToAdd = (int) ((payment.getAmount() / 100.0) * 30);
+                if (daysToAdd < 30) {
+                    daysToAdd = 30; // Minimum 1 month
+                }
+                endDate = startDate.plusDays(daysToAdd);
+            }
+
+            // Create new subscription period
+            SubscriptionPeriod newSubscription = new SubscriptionPeriod();
+            newSubscription.setMember(member);
+            newSubscription.setStartDate(startDate);
+            newSubscription.setEndDate(endDate);
+            newSubscription.setFees(payment.getAmount());
+            newSubscription.setPaid(true);
+            newSubscription.setPayment(payment);
+
+            subscriptionPeriodDAO.save(newSubscription);
+
+        } catch (Exception e) {
+            // Log error but don't fail the payment
+            System.err.println("Error creating subscription period: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -91,6 +157,23 @@ public class PaymentServiceImpl implements PaymentService {
             if (payment.getDate().isBefore(LocalDate.now().minusDays(30))) {
                 throw new BusinessRuleException("Cannot delete payments older than 30 days");
             }
+
+            // Handle foreign key constraints: nullify payment references before deletion
+            try {
+                // Nullify in subscription periods
+                subscriptionPeriodDAO.nullifyPaymentReference(paymentId);
+            } catch (Exception e) {
+                System.err.println("Warning: Could not nullify payment references in subscription periods: " + e.getMessage());
+            }
+
+            try {
+                // Nullify in belt tests
+                beltTestDAO.nullifyPaymentReference(paymentId);
+            } catch (Exception e) {
+                System.err.println("Warning: Could not nullify payment references in belt tests: " + e.getMessage());
+            }
+
+            // Now safe to delete the payment
             paymentDAO.delete(paymentId);
         } else {
             throw new NotFoundException("Payment not found with ID: " + paymentId);
@@ -132,6 +215,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setDate(date != null ? date : LocalDate.now());
         payment.setMember(member);
 
+        // This will automatically create/extend subscription via createPayment
         return createPayment(payment);
     }
 

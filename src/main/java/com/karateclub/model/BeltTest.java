@@ -2,6 +2,7 @@ package com.karateclub.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "BeltTest")
@@ -69,6 +70,18 @@ public class BeltTest {
 
     public Payment getPayment() { return payment; }
     public void setPayment(Payment payment) { this.payment = payment; }
+
+    @Transient
+    public String getFormattedDate() {
+        return date != null ? date.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) : "";
+    }
+
+    @Transient
+    public String getStatus() {
+        if (date == null) return "Unknown";
+        if (date.isAfter(LocalDate.now())) return "Scheduled";
+        return result ? "Passed" : "Failed";
+    }
 
     @Override
     public String toString() {

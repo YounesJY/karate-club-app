@@ -47,6 +47,14 @@
         <c:remove var="successMessage" scope="session"/>
     </c:if>
 
+    <c:if test="${not empty sessionScope.errorMessage}">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            ${sessionScope.errorMessage}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <c:remove var="errorMessage" scope="session"/>
+    </c:if>
+
     <div class="card">
         <div class="card-header">
             <div class="row">
@@ -81,12 +89,12 @@
                             <td>${payment.paymentID}</td>
                             <td>${payment.member.person.name}</td>
                             <td>
-                                        <span class="badge bg-success">
-                                            $<fmt:formatNumber value="${payment.amount}" pattern="#,##0.00"/>
-                                        </span>
+                                <span class="badge bg-success">
+                                    $<fmt:formatNumber value="${payment.amount}" pattern=",#0.00"/>
+                                </span>
                             </td>
                             <td>
-                                <fmt:formatDate value="${payment.date}" pattern="MMM dd, yyyy"/>
+                                ${payment.formattedDate}
                             </td>
                             <td>
                                 <span class="badge bg-info">Subscription</span>
@@ -122,7 +130,7 @@
                     <div class="card bg-primary text-white">
                         <div class="card-body text-center">
                             <h6>Total Revenue</h6>
-                            <h4>$<fmt:formatNumber value="${totalRevenue}" pattern="#,##0.00"/></h4>
+                            <h4>$<fmt:formatNumber value="${totalRevenue}" pattern=",#0.00"/></h4>
                         </div>
                     </div>
                 </div>
@@ -130,7 +138,7 @@
                     <div class="card bg-success text-white">
                         <div class="card-body text-center">
                             <h6>This Month</h6>
-                            <h4>$<fmt:formatNumber value="${monthRevenue}" pattern="#,##0.00"/></h4>
+                            <h4>$<fmt:formatNumber value="${monthRevenue}" pattern=",#0.00"/></h4>
                         </div>
                     </div>
                 </div>
@@ -146,7 +154,7 @@
                     <div class="card bg-info text-white">
                         <div class="card-body text-center">
                             <h6>Avg. Payment</h6>
-                            <h4>$<fmt:formatNumber value="${avgPayment}" pattern="#,##0.00"/></h4>
+                            <h4>$<fmt:formatNumber value="${avgPayment}" pattern=",#0.00"/></h4>
                         </div>
                     </div>
                 </div>
