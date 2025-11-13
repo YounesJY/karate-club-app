@@ -52,27 +52,38 @@ public class DashboardService {
         }
         return data;
     }
-    public Map<String, Object> getMemberProfile(int memberId) {
-        return executeInSafeMode(() -> {
-            Map<String, Object> data = new HashMap<>();
 
-            Member member = memberDAO.getById(memberId);
+    public Map<String, Object> getMemberProfile(int memberId) {
+        Map<String, Object> data = new HashMap<>();
+        try {
+            // Get member info
+            MemberDAO memberDAO = new MemberDAO();
+            Member member = memberDAO.findByPersonId(memberId);
+
+            if (member == null) {
+                // If not found by personId, try by memberId directly
+                member = memberDAO.getById(memberId);
+            }
+
             data.put("member", member);
 
             // Get test history
-            List<BeltTest> testHistory = beltTestDAO.findByMember(memberId);
+            BeltTestDAO testDAO = new BeltTestDAO();
+            List<BeltTest> testHistory = testDAO.findByMember(member.getMemberID());
             data.put("testHistory", testHistory != null ? testHistory : new ArrayList<>());
 
             // Get payment history
-            List<Payment> paymentHistory = paymentDAO.findByMember(memberId);
+            PaymentDAO paymentDAO = new PaymentDAO();
+            List<Payment> paymentHistory = paymentDAO.findByMember(member.getMemberID());
             data.put("paymentHistory", paymentHistory != null ? paymentHistory : new ArrayList<>());
 
-            // Get current subscription
-            Object currentSubscription = memberDAO.getCurrentSubscription(memberId);
-            data.put("currentSubscription", currentSubscription);
-
-            return data;
-        });
+        } catch (Exception e) {
+            // Fallback for demo
+            data.put("member", new Member());
+            data.put("testHistory", new ArrayList<>());
+            data.put("paymentHistory", new ArrayList<>());
+        }
+        return data;
     }
 
     public List<Map<String, String>> getRecentActivities(int limit) {
