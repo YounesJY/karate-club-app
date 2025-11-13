@@ -34,4 +34,4 @@
         <!-- We'll uncomment these as we create the entities -->
 
     </session-factory>
-</hibernate-configuration>
+</hibernate-configuration>        <mapping class="com.karateclub.model.User"/>
