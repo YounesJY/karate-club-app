@@ -94,7 +94,7 @@
                                 </span>
                             </td>
                             <td>
-                                ${payment.formattedDate}
+                                ${payment.date}
                             </td>
                             <td>
                                 <span class="badge bg-info">Subscription</span>

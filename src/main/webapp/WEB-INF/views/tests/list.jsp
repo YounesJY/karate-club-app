@@ -10,7 +10,7 @@
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand" href="index.jsp">
+        <a class="navbar-brand" href="dashboard">
             <i class="fas fa-fist-raised"></i> Karate Club
         </a>
         <div class="navbar-nav">
@@ -57,7 +57,7 @@
                         <th>Rank</th>
                         <th>Instructor</th>
                         <th>Date</th>
-                        <th>Status</th>
+                        <th>Result</th>
                         <th>Payment</th>
                         <th>Actions</th>
                     </tr>
@@ -83,27 +83,39 @@
                                     <c:otherwise>—</c:otherwise>
                                 </c:choose>
                             </td>
-                            <td>${t.formattedDate}</td>
+                            <td>${t.date}</td>
                             <td>
+                                <!-- FIXED: Removed duplicated c:choose blocks -->
                                 <c:choose>
-                                    <c:when test="${t.status eq 'Passed'}"><span class="badge bg-success">Passed</span></c:when>
-                                    <c:when test="${t.status eq 'Failed'}"><span class="badge bg-danger">Failed</span></c:when>
-                                    <c:otherwise><span class="badge bg-secondary">${t.status}</span></c:otherwise>
+                                    <c:when test="${t.result}">
+                                        <span class="badge bg-success">PASS</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="badge bg-danger">FAIL</span>
+                                    </c:otherwise>
                                 </c:choose>
                             </td>
                             <td>
                                 <c:choose>
-                                    <c:when test="${not empty t.payment}">Paid <span class="text-muted">#${t.payment.paymentID}</span></c:when>
-                                    <c:otherwise><span class="badge bg-warning text-dark">Unpaid</span></c:otherwise>
+                                    <c:when test="${not empty t.payment}">
+                                        Paid <span class="text-muted">#${t.payment.paymentID}</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="badge bg-warning text-dark">Unpaid</span>
+                                    </c:otherwise>
                                 </c:choose>
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">
-                                    <a class="btn btn-outline-primary" href="tests?action=view&id=${t.testID}"><i class="fas fa-eye"></i></a>
-                                    <form method="post" action="tests" onsubmit="return confirm('Delete this test?');">
+                                    <a class="btn btn-outline-primary" href="tests?action=view&id=${t.testID}">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <form method="post" action="tests" onsubmit="return confirm('Delete this test?');" style="display: inline;">
                                         <input type="hidden" name="action" value="delete"/>
                                         <input type="hidden" name="id" value="${t.testID}"/>
-                                        <button type="submit" class="btn btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                        <button type="submit" class="btn btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
                                     </form>
                                 </div>
                             </td>

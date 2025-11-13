@@ -1,5 +1,6 @@
 package com.karateclub.dao;
 
+import com.karateclub.model.BeltRank;
 import com.karateclub.model.BeltTest;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
@@ -48,4 +49,18 @@ public class BeltTestDAO extends GenericDAO<BeltTest> {
             return query.uniqueResult();
         }
     }
+
+    public List<BeltTest> getPendingTests() {
+        return findByHQL("FROM BeltTest bt WHERE bt.result IS NULL");
+    }
+
+    public List<BeltTest> getUpcomingTestsByInstructor(int instructorId) {
+        try (Session session = getSession()) {
+            String hql = "FROM BeltTest bt WHERE bt.testedByInstructor.instructorID = :instructorId AND bt.result IS NULL";
+            Query<BeltTest> query = session.createQuery(hql, BeltTest.class);
+            query.setParameter("instructorId", instructorId);
+            return query.list();
+        }
+    }
+    
 }

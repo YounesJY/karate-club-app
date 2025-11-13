@@ -64,7 +64,7 @@
                         <tr>
                             <td>${payment.paymentID}</td>
                             <td>$<fmt:formatNumber value="${payment.amount}" pattern=",#0.00"/></td>
-                            <td>${payment.formattedDate}</td>
+                            <td>${payment.date}</td>
                             <td>
                                 <a href="payments?action=view&id=${payment.paymentID}"
                                    class="btn btn-sm btn-outline-primary">

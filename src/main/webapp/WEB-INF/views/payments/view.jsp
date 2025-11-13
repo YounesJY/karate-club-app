@@ -47,7 +47,7 @@
                 <dd class="col-sm-9">$<fmt:formatNumber value="${payment.amount}" pattern=",#0.00"/></dd>
 
                 <dt class="col-sm-3">Date</dt>
-                <dd class="col-sm-9">${payment.formattedDate}</dd>
+                <dd class="col-sm-9">${payment.date}</dd>
             </dl>
         </div>
     </div>

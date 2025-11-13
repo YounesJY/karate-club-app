@@ -71,6 +71,7 @@ public class BeltTest {
     public Payment getPayment() { return payment; }
     public void setPayment(Payment payment) { this.payment = payment; }
 
+
     @Override
     public String toString() {
         return "BeltTest{" +

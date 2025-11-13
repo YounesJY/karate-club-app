@@ -1,6 +1,5 @@
 <%-- src/main/webapp/WEB-INF/views/auth/login.jsp --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,19 +33,24 @@
                 <p class="text-muted">Enter your credentials</p>
             </div>
 
-            <%-- Display error messages --%>
-            <c:if test="${not empty errorMessage}">
+            <%-- Display error messages without JSTL --%>
+            <%
+                String errorMessage = (String) request.getAttribute("errorMessage");
+                String username = request.getParameter("username");
+                if (username == null) username = "";
+            %>
+            <% if (errorMessage != null) { %>
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    ${errorMessage}
+                    <%= errorMessage %>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
-            </c:if>
+            <% } %>
 
             <form action="login" method="post">
                 <div class="mb-3">
                     <label for="username" class="form-label">Username</label>
                     <input type="text" class="form-control" id="username" name="username"
-                           value="${param.username}" required autofocus>
+                           value="<%= username %>" required autofocus>
                 </div>
 
                 <div class="mb-3">

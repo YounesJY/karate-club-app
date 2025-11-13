@@ -91,7 +91,7 @@
                             <tr>
                                 <td>${p.paymentID}</td>
                                 <td>${p.member.person.name}</td>
-                                <td>${p.formattedDate}</td>
+                                <td>${p.date}</td>
                                 <td class="text-end">$<fmt:formatNumber value="${p.amount}" pattern=",#0.00"/></td>
                             </tr>
                         </c:forEach>

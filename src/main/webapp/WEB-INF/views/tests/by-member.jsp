@@ -45,12 +45,12 @@
                             <td>${t.testID}</td>
                             <td><span class="badge bg-info">${t.rank.rankName}</span></td>
                             <td>${t.testedByInstructor.person.name}</td>
-                            <td>${t.formattedDate}</td>
+                            <td>${t.date}</td>
                             <td>
                                 <c:choose>
-                                    <c:when test="${t.status eq 'Passed'}"><span class="badge bg-success">Passed</span></c:when>
-                                    <c:when test="${t.status eq 'Failed'}"><span class="badge bg-danger">Failed</span></c:when>
-                                    <c:otherwise><span class="badge bg-secondary">${t.status}</span></c:otherwise>
+                                    <c:when test="${t.result eq 'Passed'}"><span class="badge bg-success">Passed</span></c:when>
+                                    <c:when test="${t.result eq 'Failed'}"><span class="badge bg-danger">Failed</span></c:when>
+                                    <c:otherwise><span class="badge bg-secondary">${t.result}</span></c:otherwise>
                                 </c:choose>
                             </td>
                             <td><c:choose><c:when test="${not empty t.payment}">#${t.payment.paymentID}</c:when><c:otherwise>—</c:otherwise></c:choose></td>

@@ -1,66 +1,71 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.karateclub</groupId>
-  <artifactId>karate-club-app</artifactId>
-  <packaging>war</packaging>
-  <version>1.0-SNAPSHOT</version>
-  <name>karate-club-app Maven Webapp</name>
-  <url>http://maven.apache.org</url>
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-    </dependency>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.karateclub</groupId>
+    <artifactId>karate-club-app</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <name>karate-club-app Maven Webapp</name>
+    <url>http://maven.apache.org</url>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <scope>test</scope>
+        </dependency>
 
-      <!-- https://mvnrepository.com/artifact/jakarta.servlet/jakarta.servlet-api -->
-      <dependency>
-          <groupId>jakarta.servlet</groupId>
-          <artifactId>jakarta.servlet-api</artifactId>
-          <version>5.0.0</version>
-          <scope>provided</scope>
-      </dependency>
+        <!-- Jakarta Servlet API -->
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>5.0.0</version>
+            <scope>provided</scope>
+        </dependency>
 
-      <!-- https://mvnrepository.com/artifact/jakarta.servlet.jsp.jstl/jakarta.servlet.jsp.jstl-api -->
-      <dependency>
-          <groupId>jakarta.servlet.jsp.jstl</groupId>
-          <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
-          <version>3.0.2</version>
-      </dependency>
+        <!-- JSTL 1.2 for traditional URIs -->
+        <dependency>
+            <groupId>org.glassfish.web</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl</artifactId>
+            <version>2.0.0</version>
+        </dependency>
 
-      <!-- https://mvnrepository.com/artifact/com.mysql/mysql-connector-j -->
-      <dependency>
-          <groupId>com.mysql</groupId>
-          <artifactId>mysql-connector-j</artifactId>
-          <version>9.5.0</version>
-      </dependency>
+        <dependency>
+            <groupId>jakarta.servlet.jsp.jstl</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
+            <version>2.0.0</version>
+        </dependency>
 
-      <!-- https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-core -->
-      <dependency>
-          <groupId>org.hibernate.orm</groupId>
-          <artifactId>hibernate-core</artifactId>
-          <version>7.1.5.Final</version>
-      </dependency>
+        <!-- MySQL Connector -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>9.5.0</version>
+        </dependency>
 
-      <!-- https://mvnrepository.com/artifact/jakarta.persistence/jakarta.persistence-api -->
-      <dependency>
-          <groupId>jakarta.persistence</groupId>
-          <artifactId>jakarta.persistence-api</artifactId>
-          <version>3.2.0</version>
-      </dependency>
+        <!-- Hibernate ORM -->
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>7.1.5.Final</version>
+        </dependency>
 
+        <!-- Jakarta Persistence API -->
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+            <version>3.2.0</version>
+        </dependency>
 
-      <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
-      <dependency>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-          <version>2.0.17</version>
-      </dependency>
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.17</version>
+        </dependency>
 
-  </dependencies>
-  <build>
-    <finalName>karate-club-app</finalName>
-  </build>
+    </dependencies>
+    <build>
+        <finalName>karate-club-app</finalName>
+    </build>
 </project>

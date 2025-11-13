@@ -36,12 +36,12 @@
                             <tr><th>Member</th><td>${test.member.person.name} <span class="text-muted">#${test.member.memberID}</span></td></tr>
                             <tr><th>Rank</th><td><span class="badge bg-info">${test.rank.rankName}</span></td></tr>
                             <tr><th>Instructor</th><td>${test.testedByInstructor.person.name}</td></tr>
-                            <tr><th>Date</th><td>${test.formattedDate}</td></tr>
+                            <tr><th>Date</th><td>${test.date}</td></tr>
                             <tr><th>Status</th><td>
                                 <c:choose>
-                                    <c:when test="${test.status eq 'Passed'}"><span class="badge bg-success">Passed</span></c:when>
-                                    <c:when test="${test.status eq 'Failed'}"><span class="badge bg-danger">Failed</span></c:when>
-                                    <c:otherwise><span class="badge bg-secondary">${test.status}</span></c:otherwise>
+                                    <c:when test="${test.result eq 'Passed'}"><span class="badge bg-success">Passed</span></c:when>
+                                    <c:when test="${test.result eq 'Failed'}"><span class="badge bg-danger">Failed</span></c:when>
+                                    <c:otherwise><span class="badge bg-secondary">${test.result}</span></c:otherwise>
                                 </c:choose>
                             </td></tr>
                             <tr><th>Payment</th><td>

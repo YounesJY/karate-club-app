@@ -7,7 +7,7 @@ import org.hibernate.query.Query;
 
 import java.util.List;
 
-public class GenericDAO<T> {
+public class GenericDAO<T> extends BaseDAO  {
     private final Class<T> entityClass;
 
     public GenericDAO(Class<T> entityClass) {
@@ -30,7 +30,7 @@ public class GenericDAO<T> {
     // READ - Get by ID (lazy loading)
     public T getById(int id) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            return session.get(entityClass, id);
+            return session.find(entityClass, id);
         }
     }
 
@@ -73,7 +73,7 @@ public class GenericDAO<T> {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            T entity = session.get(entityClass, id);
+            T entity = session.find(entityClass, id);
             if (entity != null) {
                 session.remove(entity);
             }
@@ -107,10 +107,5 @@ public class GenericDAO<T> {
     // Check if entity exists by ID
     public boolean exists(int id) {
         return getById(id) != null;
-    }
-
-    // Get session for complex operations that need extended session
-    protected Session getSession() {
-        return HibernateUtil.getSessionFactory().openSession();
     }
 }

@@ -1,6 +1,10 @@
 package com.karateclub.dao;
 
 import com.karateclub.model.Instructor;
+import com.karateclub.model.Member;
+import org.hibernate.Session;
+import org.hibernate.query.Query;
+
 import java.util.List;
 
 public class InstructorDAO extends GenericDAO<Instructor> {
@@ -41,4 +45,15 @@ public class InstructorDAO extends GenericDAO<Instructor> {
         }
         return 0;
     }
+
+    // Add to InstructorDAO.java
+    public List<Member> getStudentsByInstructor(int instructorId) {
+        try (Session session = getSession()) {
+            String hql = "SELECT mi.member FROM MemberInstructor mi WHERE mi.instructor.instructorID = :instructorId";
+            Query<Member> query = session.createQuery(hql, Member.class);
+            query.setParameter("instructorId", instructorId);
+            return query.list();
+        }
+    }
+
 }

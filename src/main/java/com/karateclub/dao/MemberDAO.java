@@ -115,4 +115,22 @@ public class MemberDAO extends GenericDAO<Member> {
             return query.uniqueResult();
         }
     }
+
+    // Add to MemberDAO.java
+    public Object getCurrentSubscription(int memberId) {
+        try (Session session = getSession()) {
+            String hql = "FROM SubscriptionPeriod sp WHERE sp.member.memberID = :memberId AND sp.paid = true ORDER BY sp.endDate DESC";
+            Query query = session.createQuery(hql);
+            query.setParameter("memberId", memberId);
+            query.setMaxResults(1);
+            return query.uniqueResult();
+        }
+    }
+
+    // Add findByPersonId method
+    public Member findByPersonId(int personId) {
+        List<Member> results = findByHQL("FROM Member m WHERE m.person.personID = ?1", personId);
+        return results.isEmpty() ? null : results.get(0);
+    }
+
 }
