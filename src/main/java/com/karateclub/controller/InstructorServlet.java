@@ -10,6 +10,7 @@ import com.karateclub.service.exception.NotFoundException;
 import com.karateclub.service.exception.ValidationException;
 import com.karateclub.service.exception.BusinessRuleException;
 
+import com.karateclub.util.SecurityUtil;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
@@ -27,12 +28,22 @@ public class InstructorServlet extends HttpServlet {
         instructorService = new InstructorServiceImpl();
     }
 
+    // In InstructorServlet - doGet method
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         String action = request.getParameter("action");
         if (action == null) action = "list";
+
+        // Check authorization for modification actions
+        if (action.equals("new") || action.equals("edit") || action.equals("delete") ||
+                action.equals("assignStudent")) {
+
+            if (SecurityUtil.redirectIfNotAdmin(request, response)) {
+                return;
+            }
+        }
 
         try {
             switch (action) {
@@ -46,22 +57,28 @@ public class InstructorServlet extends HttpServlet {
                     deleteInstructor(request, response);
                     break;
                 case "viewStudents":
-                    viewStudents(request, response);
+                    viewStudents(request, response); // All roles can view students
                     break;
                 case "assignStudent":
                     showAssignStudentForm(request, response);
                     break;
                 default:
-                    listInstructors(request, response);
+                    listInstructors(request, response); // All roles can view list
             }
         } catch (Exception e) {
             throw new ServletException(e);
         }
     }
 
+    // In InstructorServlet - doPost method
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
+        // All POST operations require ADMIN role
+        if (SecurityUtil.redirectIfNotAdmin(request, response)) {
+            return;
+        }
 
         String action = request.getParameter("action");
         if (action == null) action = "list";
@@ -87,7 +104,6 @@ public class InstructorServlet extends HttpServlet {
             throw new ServletException(e);
         }
     }
-
     private void listInstructors(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 

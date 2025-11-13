@@ -9,6 +9,7 @@ import com.karateclub.service.exception.NotFoundException;
 import com.karateclub.service.exception.ValidationException;
 import com.karateclub.service.exception.BusinessRuleException;
 
+import com.karateclub.util.SecurityUtil;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
@@ -24,12 +25,22 @@ public class MemberServlet extends HttpServlet {
         memberService = new MemberServiceImpl();
     }
 
+    // In MemberServlet - doGet method
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         String action = request.getParameter("action");
         if (action == null) action = "list";
+
+        // Check authorization for modification actions
+        if (action.equals("new") || action.equals("edit") || action.equals("promote") ||
+                action.equals("activate") || action.equals("deactivate")) {
+
+            if (SecurityUtil.redirectIfNotAdmin(request, response)) {
+                return; // Already redirected to access-denied
+            }
+        }
 
         try {
             switch (action) {
@@ -49,16 +60,22 @@ public class MemberServlet extends HttpServlet {
                     showPromoteForm(request, response);
                     break;
                 default:
-                    listMembers(request, response);
+                    listMembers(request, response); // All roles can view list
             }
         } catch (Exception e) {
             throw new ServletException(e);
         }
     }
 
+    // In MemberServlet - doPost method
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
+        // All POST operations require ADMIN role
+        if (SecurityUtil.redirectIfNotAdmin(request, response)) {
+            return;
+        }
 
         String action = request.getParameter("action");
         if (action == null) action = "list";
@@ -84,7 +101,6 @@ public class MemberServlet extends HttpServlet {
             throw new ServletException(e);
         }
     }
-
     private void listMembers(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
