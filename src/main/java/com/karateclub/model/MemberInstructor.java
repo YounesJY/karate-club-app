@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "MemberInstructors")
+@Table(name = "MembersInstructors")
 public class MemberInstructor {
 
     @EmbeddedId
