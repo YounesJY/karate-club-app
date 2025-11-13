@@ -28,7 +28,7 @@
         <property name="hibernate.enable_lazy_load_no_trans">true</property>
         <property name="hibernate.max_fetch_depth">3</property>
 
-        <!-- Entity class mappings - UNCOMMENT THESE -->
+        <!-- Entity class mappings - ADD USER MAPPING -->
         <mapping class="com.karateclub.model.Person"/>
         <mapping class="com.karateclub.model.Member"/>
         <mapping class="com.karateclub.model.Instructor"/>
@@ -37,6 +37,7 @@
         <mapping class="com.karateclub.model.Payment"/>
         <mapping class="com.karateclub.model.SubscriptionPeriod"/>
         <mapping class="com.karateclub.model.MemberInstructor"/>
+        <mapping class="com.karateclub.model.User"/> <!-- ADD THIS LINE -->
 
     </session-factory>
 </hibernate-configuration>

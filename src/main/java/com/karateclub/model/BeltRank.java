@@ -3,7 +3,7 @@ package com.karateclub.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "BeltRank")
+@Table(name = "BeltRanks")
 public class BeltRank {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

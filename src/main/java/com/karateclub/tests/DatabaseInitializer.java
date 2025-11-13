@@ -129,6 +129,34 @@ public class DatabaseInitializer {
             session.persist(assignment3);
             session.persist(assignment4);
 
+
+            // Get existing persons to link with users
+            Person adminPerson = session.createQuery("FROM Person WHERE name = 'John Doe'", Person.class)
+                    .setMaxResults(1).uniqueResult();
+            Person instructorPerson = session.createQuery("FROM Person WHERE name = 'Jane Smith'", Person.class)
+                    .setMaxResults(1).uniqueResult();
+            Person memberPerson = session.createQuery("FROM Person WHERE name = 'Mike Johnson'", Person.class)
+                    .setMaxResults(1).uniqueResult();
+
+            if (adminPerson == null || instructorPerson == null || memberPerson == null) {
+                System.out.println("❌ Could not find required persons for user creation");
+                return;
+            }
+
+            // Create test users (passwords in plain text for demo)
+            User adminUser = new User("admin", "admin123", UserRole.ADMIN, adminPerson);
+            User instructorUser = new User("instructor1", "instructor123", UserRole.INSTRUCTOR, instructorPerson);
+            User memberUser = new User("member1", "member123", UserRole.MEMBER, memberPerson);
+
+            session.persist(adminUser);
+            session.persist(instructorUser);
+            session.persist(memberUser);
+
+            System.out.println("✅ Test users created successfully!");
+            System.out.println("   - admin/admin123 (ADMIN)");
+            System.out.println("   - instructor1/instructor123 (INSTRUCTOR)");
+            System.out.println("   - member1/member123 (MEMBER)");
+
             transaction.commit();
             System.out.println("✅ Database initialized successfully with sample data!");
 
@@ -140,6 +168,7 @@ public class DatabaseInitializer {
             session.close();
         }
     }
+
 
     public static void main(String[] args) {
         initializeSampleData();
