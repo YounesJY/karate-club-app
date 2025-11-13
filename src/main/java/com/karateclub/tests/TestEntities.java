@@ -1,4 +1,4 @@
-package com.karateclub;
+package com.karateclub.tests;
 
 import com.karateclub.config.HibernateUtil;
 import org.hibernate.Session;
