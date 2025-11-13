@@ -5,10 +5,10 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 @Entity
-@Table(name = "BeltTest")
+@Table(name = "BeltTests")
 public class BeltTest {
     @Id
-    @Column(name = "TestID")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int testID;
 
     @ManyToOne

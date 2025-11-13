@@ -85,13 +85,13 @@ public class BeltTestServlet extends HttpServlet {
             throws ServletException, IOException {
         List<BeltTest> tests = testService.getAllTests();
         request.setAttribute("tests", tests);
-        RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/Tests/list.jsp");
+        RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/tests/list.jsp");
         rd.forward(request, response);
     }
 
     private void showScheduleForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/Tests/schedule.jsp");
+        RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/tests/schedule.jsp");
         rd.forward(request, response);
     }
 
@@ -100,7 +100,7 @@ public class BeltTestServlet extends HttpServlet {
         int id = Integer.parseInt(request.getParameter("id"));
         BeltTest test = testService.getTestById(id);
         request.setAttribute("test", test);
-        RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/Tests/view.jsp");
+        RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/tests/view.jsp");
         rd.forward(request, response);
     }
 
@@ -110,7 +110,7 @@ public class BeltTestServlet extends HttpServlet {
         List<BeltTest> tests = testService.getTestsByMember(memberId);
         request.setAttribute("tests", tests);
         request.setAttribute("memberId", memberId);
-        RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/Tests/by-member.jsp");
+        RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/tests/by-member.jsp");
         rd.forward(request, response);
     }
 
@@ -120,7 +120,7 @@ public class BeltTestServlet extends HttpServlet {
         List<BeltTest> tests = testService.getTestsByInstructor(instructorId);
         request.setAttribute("tests", tests);
         request.setAttribute("instructorId", instructorId);
-        RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/Tests/by-instructor.jsp");
+        RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/tests/by-instructor.jsp");
         rd.forward(request, response);
     }
 
@@ -136,7 +136,7 @@ public class BeltTestServlet extends HttpServlet {
             request.setAttribute("startDate", start);
             request.setAttribute("endDate", end);
         }
-        RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/Tests/report.jsp");
+        RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/tests/report.jsp");
         rd.forward(request, response);
     }
 
